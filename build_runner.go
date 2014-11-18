@@ -14,7 +14,6 @@ type Stream int
 
 const (
 	stdin Stream = iota
-
 	// Stdout indicates the LogMsg's message should be printed, if at all, to stdout
 	Stdout
 
