@@ -3,11 +3,10 @@ package builder
 import (
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"regexp"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/hishboy/gocommons/lang"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/modcloth/go-fileutils"
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
@@ -180,10 +179,11 @@ func (bob *Builder) Setup() Error {
 		return bErr
 	}
 
-	fileSet := lang.NewHashSet()
-	top := sanitizedPathToDockerfile.Top()
-
-	files, err := ioutil.ReadDir(top)
+	contextDir := sanitizedPathToDockerfile.Top()
+	tarStream, err := archive.TarWithOptions(contextDir, &archive.TarOptions{
+		Compression: archive.Uncompressed,
+		Excludes:    []string{"Dockerfile"},
+	})
 	if err != nil {
 		return &BuildRelatedError{
 			Message: err.Error(),
@@ -191,37 +191,17 @@ func (bob *Builder) Setup() Error {
 		}
 	}
 
-	for _, v := range files {
-		fileSet.Add(v.Name())
-	}
-
-	if fileSet.Contains("Dockerfile") {
-		fileSet.Remove("Dockerfile")
-	}
-
-	// add the Dockerfile
-	fileSet.Add(filepath.Base(meta.Dockerfile))
-
-	// copy the actual files over
-	for _, file := range fileSet.ToSlice() {
-		src := top + "/" + file.(string)
-		dest := workdir + "/" + file.(string)
-
-		if file == meta.Dockerfile {
-			dest = workdir + "/" + "Dockerfile"
+	defer tarStream.Close()
+	if err := archive.Untar(tarStream, workdir, nil); err != nil {
+		return &BuildRelatedError{
+			Message: err.Error(),
+			Code:    1,
 		}
-
-		cpArgs := fileutils.CpArgs{
-			Recursive:       true,
-			PreserveLinks:   true,
-			PreserveModTime: true,
-		}
-
-		if err := fileutils.CpWithArgs(src, dest, cpArgs); err != nil {
-			return &BuildRelatedError{
-				Message: err.Error(),
-				Code:    1,
-			}
+	}
+	if err := fileutils.CpWithArgs(contextDir+"/"+meta.Dockerfile, workdir+"/Dockerfile", fileutils.CpArgs{PreserveModTime: true}); err != nil {
+		return &BuildRelatedError{
+			Message: err.Error(),
+			Code:    1,
 		}
 	}
 
