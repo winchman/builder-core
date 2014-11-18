@@ -1,15 +1,16 @@
 package parser
 
 import (
-	"os/exec"
+	"github.com/fsouza/go-dockerclient"
 
-	"github.com/rafecolton/docker-builder/builderfile"
-	"github.com/rafecolton/docker-builder/conf"
-	"github.com/rafecolton/docker-builder/parser/tag"
+	"github.com/sylphon/build-runner/builderfile"
+	"github.com/sylphon/build-runner/parser/tag"
 )
 
-// turns InstructionSet structs into CommandSequence structs
-func (parser *Parser) commandSequenceFromInstructionSet(is *InstructionSet) *CommandSequence {
+// CommandSequenceFromInstructionSet turns an InstructionSet struct into a
+// CommandSequence struct - one of the intermediate steps to building, will
+// eventually be made private
+func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *CommandSequence {
 	ret := &CommandSequence{
 		Commands: []*SubSequence{},
 	}
@@ -23,7 +24,7 @@ func (parser *Parser) commandSequenceFromInstructionSet(is *InstructionSet) *Com
 		tagCommands = []DockerCmd{}
 		pushCommands = []DockerCmd{}
 
-		// ADD BUILD COMMANDS
+		// ADD BUILD COMMAND
 		uuid, err := parser.NextUUID()
 		if err != nil {
 			return nil
@@ -31,30 +32,52 @@ func (parser *Parser) commandSequenceFromInstructionSet(is *InstructionSet) *Com
 
 		name := v.Registry + "/" + v.Project
 		initialTag := name + ":" + uuid
-		buildArgs := []string{"docker", "build", "-t", initialTag}
-		buildArgs = append(buildArgs, is.DockerBuildOpts...)
-		buildArgs = append(buildArgs, ".")
-
-		containerCommands = append(containerCommands, &BuildCmd{
-			Cmd: &exec.Cmd{
-				Path: "docker",
-				Args: buildArgs,
-			},
-		})
 
 		// get docker registry credentials
 		un := v.CfgUn
 		pass := v.CfgPass
 		email := v.CfgEmail
-		if un == "" {
-			un = conf.Config.CfgUn
+
+		buildOpts := docker.BuildImageOptions{
+			Name:           initialTag,
+			RmTmpContainer: true,
+			ContextDir:     parser.top,
+			Auth: docker.AuthConfiguration{
+				Username: un,
+				Password: pass,
+				Email:    email,
+			},
+			AuthConfigs: docker.AuthConfigurations{
+				Configs: map[string]docker.AuthConfiguration{
+					v.Registry: docker.AuthConfiguration{
+						Username:      un,
+						Password:      pass,
+						Email:         email,
+						ServerAddress: v.Registry,
+					},
+				},
+			},
 		}
-		if pass == "" {
-			pass = conf.Config.CfgPass
+
+		for _, opt := range is.DockerBuildOpts {
+			switch opt {
+			case "--force-rm":
+				buildOpts.ForceRmTmpContainer = true
+			case "--no-cache":
+				buildOpts.NoCache = true
+			case "-q", "--quiet":
+				buildOpts.SuppressOutput = true
+			case "--no-rm":
+				// Is "--no-rm" this the best way to handle this since default is true?
+				// Maybe so, just document it somewhere (TODO)
+				buildOpts.RmTmpContainer = false
+			}
 		}
-		if email == "" {
-			email = conf.Config.CfgEmail
-		}
+
+		containerCommands = append(containerCommands, &BuildCmd{
+			buildOpts:     buildOpts,
+			origBuildOpts: is.DockerBuildOpts,
+		})
 
 		// ADD TAG COMMANDS
 		for _, t := range v.Tags {
@@ -153,8 +176,10 @@ func mergeGlobals(container, globals *builderfile.ContainerSection) *builderfile
 	return container
 }
 
-// turns Builderfile structs into InstructionSet structs
-func (parser *Parser) instructionSetFromBuilderfileStruct(file *builderfile.Builderfile) *InstructionSet {
+// InstructionSetFromBuilderfileStruct turns a UnitConfig struct into an
+// InstructionSet struct - one of the intermediate steps to building, will
+// eventually be made private
+func (parser *Parser) InstructionSetFromBuilderfileStruct(file *builderfile.UnitConfig) *InstructionSet {
 	ret := &InstructionSet{
 		DockerBuildOpts: file.Docker.BuildOpts,
 		DockerTagOpts:   file.Docker.TagOpts,

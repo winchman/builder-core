@@ -1,11 +1,7 @@
 package tag
 
 import (
-	"os/exec"
-)
-
-import (
-	"github.com/modcloth/go-fileutils"
+	"github.com/sylphon/build-runner/git"
 )
 
 /*
@@ -58,48 +54,22 @@ func (tag *nullTag) Tag() string {
 }
 
 /*
-Tag, for a special set of macros (currently `git:branch`, `git:rev`,
-& `git:short`) returns git information from the directory in which bob was run.
+Tag, for a special set of macros (currently `git:branch`, `git:sha`,
+& `git:tag`) returns git information from the directory in which bob was run.
 These macros are specified in args["tag"], and to work properly, args["top"]
 must be supplied as well.  If any of the conditions are not met, Tag returns
 "".
 */
 func (gt *gitTag) Tag() string {
-
-	top := gt.top
-	git, _ := fileutils.Which("git")
-
-	branchCmd := &exec.Cmd{
-		Path: git,
-		Dir:  top,
-		Args: []string{git, "rev-parse", "-q", "--abbrev-ref", "HEAD"},
-	}
-	branchBytes, _ := branchCmd.Output()
-	revCmd := &exec.Cmd{
-		Path: git,
-		Dir:  top,
-		Args: []string{git, "rev-parse", "-q", "HEAD"},
-	}
-	revBytes, _ := revCmd.Output()
-	shortCmd := &exec.Cmd{
-		Path: git,
-		Dir:  top,
-		Args: []string{git, "describe", "--always", "--dirty", "--tags"},
-	}
-	shortBytes, _ := shortCmd.Output()
-
-	// remove trailing newline
-	branch := string(branchBytes)[:len(branchBytes)-1]
-	rev := string(revBytes)[:len(revBytes)-1]
-	short := string(shortBytes)[:len(shortBytes)-1]
+	var top = gt.top
 
 	switch gt.tag {
 	case "git:branch":
-		return branch
-	case "git:rev":
-		return rev
-	case "git:short":
-		return short
+		return git.Branch(top)
+	case "git:rev", "git:sha":
+		return git.Sha(top)
+	case "git:short", "git:tag":
+		return git.Tag(top)
 	default:
 		return ""
 	}

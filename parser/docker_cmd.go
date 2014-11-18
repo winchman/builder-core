@@ -2,13 +2,10 @@ package parser
 
 import (
 	"io"
-	"os/exec"
 	"strings"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/modcloth/go-fileutils"
-
-	"github.com/rafecolton/docker-builder/dclient"
+	"github.com/rafecolton/go-dockerclient-quick"
 )
 
 /*
@@ -16,7 +13,7 @@ DockerCmdOpts is an options struct for the options required by the various
 structs that implement the DockerCmd interface
 */
 type DockerCmdOpts struct {
-	DockerClient dclient.DockerClient
+	DockerClient *dockerclient.DockerClient
 	Image        string
 	Workdir      string
 	Stdout       io.Writer
@@ -45,8 +42,9 @@ type DockerCmd interface {
 
 //BuildCmd is a wrapper for the os/exec call for `docker build`
 type BuildCmd struct {
-	Cmd  *exec.Cmd
-	opts *DockerCmdOpts
+	opts          *DockerCmdOpts
+	buildOpts     docker.BuildImageOptions
+	origBuildOpts []string
 }
 
 //WithOpts sets options required for the BuildCmd
@@ -58,25 +56,16 @@ func (b *BuildCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 //Run is the command that actually calls docker build shell command.  Determine
 //the image ID for the resulting image and return that as well.
 func (b *BuildCmd) Run() (string, error) {
-	cmd := b.Cmd
 	opts := b.opts
+	buildOpts := b.buildOpts
+	buildOpts.OutputStream = opts.Stdout
+	buildOpts.ContextDir = opts.Workdir
 
-	cmd.Stdout = opts.Stdout
-	cmd.Stderr = opts.Stderr
-	cmd.Dir = opts.Workdir
-
-	dockerExePath, err := fileutils.Which("docker")
-	if err != nil {
+	if err := opts.DockerClient.Client().BuildImage(buildOpts); err != nil {
 		return "", err
 	}
 
-	cmd.Path = dockerExePath
-
-	if err := b.Cmd.Run(); err != nil {
-		return "", err
-	}
-
-	imageID, err := opts.DockerClient.LatestImageTaggedWithUUID(opts.ImageUUID)
+	imageID, err := opts.DockerClient.LatestImageIDByName(opts.ImageUUID)
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +75,10 @@ func (b *BuildCmd) Run() (string, error) {
 
 //Message returns the shell command that gets run for docker build commands
 func (b *BuildCmd) Message() string {
-	return strings.Join(b.Cmd.Args, " ")
+	ret := []string{"docker", "build", "-t", b.buildOpts.Name}
+	ret = append(ret, b.origBuildOpts...)
+	ret = append(ret, ".")
+	return strings.Join(ret, " ")
 }
 
 //TagCmd is a wrapper for the docker TagImage functionality
@@ -102,7 +94,7 @@ type TagCmd struct {
 //WithOpts sets options required for the TagCmd
 func (t *TagCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	t.Image = opts.Image
-	t.TagFunc = opts.DockerClient.TagImage
+	t.TagFunc = opts.DockerClient.Client().TagImage
 	return t
 }
 
@@ -149,7 +141,7 @@ type PushCmd struct {
 //WithOpts sets options required for the PushCmd
 func (p *PushCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	p.OutputStream = opts.Stdout
-	p.PushFunc = opts.DockerClient.PushImage
+	p.PushFunc = opts.DockerClient.Client().PushImage
 	p.skip = opts.SkipPush
 	p.imageID = opts.Image
 	return p

@@ -1,44 +1,48 @@
 FROM ubuntu:14.04
-MAINTAINER rafael.colton@gmail.com
+MAINTAINER Rafe Colton <rafael.colton@gmail.com>
 
+ENV HOME /root
 ENV DEBIAN_FRONTEND noninteractive
 ENV GOROOT /usr/local/go
 ENV GOPATH /app
-ENV GO_TARBALL go1.3.1.linux-amd64.tar.gz
+ENV GO_TARBALL go1.3.3.linux-amd64.tar.gz
+ENV TARBALL_SHA1_SUM 14068fbe349db34b838853a7878621bbd2b24646
 ENV LD_LIBRARY_PATH /lib/x86_64-linux-gnu:/usr/local/lib:/usr/lib:/lib
 
-# Fix some issues with APT packages
-# See https://github.com/dotcloud/docker/issues/1024
-RUN dpkg-divert --local --rename --add /sbin/initctl
-RUN ln -sFf /bin/true /sbin/initctl
-RUN echo "initscripts hold" | dpkg --set-selections
+# - Fix some issues with APT packages (See https://github.com/dotcloud/docker/issues/1024)
+# - install deps, go
+RUN dpkg-divert --local --rename --add /sbin/initctl \
+  && ln -sFf /bin/true /sbin/initctl \
+  && echo "initscripts hold" | dpkg --set-selections \
+  && apt-get update -y \
+  && apt-get install -y -qq --no-install-recommends \
+    apt-transport-https \
+    build-essential \
+    curl \
+    openssh-client \
+    make \
+    git-core \
+    pkg-config \
+    mercurial \
+    ca-certificates \
+  && update-ca-certificates --fresh \
+  && curl -sLO https://storage.googleapis.com/golang/$GO_TARBALL \
+  && bash -c "test \"$(openssl sha1 $GO_TARBALL | awk '{print $2}')\" == '$TARBALL_SHA1_SUM'" \
+  && tar -C /usr/local -xzf $GO_TARBALL \
+  && ln -sv /usr/local/go/bin/* /usr/local/bin \
+  && rm -f $GO_TARBALL
 
-# install deps
-RUN apt-get update -y && apt-get install -y -qq --no-install-recommends apt-transport-https \
-  build-essential curl openssh-client make git-core pkg-config mercurial ca-certificates
-
-# install go
-RUN curl -sLO https://storage.googleapis.com/golang/$GO_TARBALL
-RUN tar -C /usr/local -xzf $GO_TARBALL
-RUN ln -sv /usr/local/go/bin/* /usr/local/bin
-RUN rm -f $GO_TARBALL
-
-# install docker
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
-RUN bash -c "echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
-RUN apt-get update -y && apt-get install -y -qq --no-install-recommends lxc-docker
-
-WORKDIR /app/src/github.com/rafecolton/docker-builder
+WORKDIR /app/src/github.com/sylphon/build-runner
 
 # set up build dir and add project
-ADD . /app/src/github.com/rafecolton/docker-builder
+ADD . /app/src/github.com/sylphon/build-runner
 
-# make sure we don't have trouble getting deps from GitHub
-RUN ssh-keyscan github.com > /etc/ssh/ssh_known_hosts
-
-# install and verify
-RUN touch Makefile
-RUN make build
-
-CMD ["-h"]
-ENTRYPOINT ["/app/bin/docker-builder"]
+# - make sure we don't have trouble getting deps from GitHub
+# - touch Makefile to avoid timestamp error message
+# - install
+RUN ssh-keyscan github.com > /etc/ssh/ssh_known_hosts \
+  && touch Makefile \
+  && make build \
+  && rm -rf $GOPATH/src \
+  && rm -rf $GOPATH/pkg \
+  && rm -f $GOPATH/bin/deppy
