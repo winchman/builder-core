@@ -48,10 +48,6 @@
 			"Rev": "10d10d464f96231c61e16f2d1b7fca3152a7040f"
 		},
 		{
-			"ImportPath": "github.com/hishboy/gocommons/lang",
-			"Rev": "044cf908ddecb539c042e1bfd9b402740a6835bc"
-		},
-		{
 			"ImportPath": "github.com/modcloth/go-fileutils",
 			"Rev": "a7a54f3b6086bcd6c70ae0f84cdb3991b015f6b0"
 		},
