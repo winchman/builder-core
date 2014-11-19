@@ -7,14 +7,15 @@ import (
 	"github.com/sylphon/build-runner/unit-config"
 )
 
+// Parse - does the parsing!
 func (parser *Parser) Parse(file *unitconfig.UnitConfig) *CommandSequence {
-	return parser.Step2(parser.Step1(file))
+	return parser.step2(parser.step1(file))
 }
 
-// Step1 (formerly InstructionSetFromBuilderfileStruct) turns a UnitConfig
+// step1 (formerly InstructionSetFromBuilderfileStruct) turns a UnitConfig
 // struct into an InstructionSet struct - one of the intermediate steps to
 // building, will eventually be made private
-func (parser *Parser) Step1(file *unitconfig.UnitConfig) *InstructionSet {
+func (parser *Parser) step1(file *unitconfig.UnitConfig) *InstructionSet {
 	ret := &InstructionSet{
 		DockerBuildOpts: file.Docker.BuildOpts,
 		DockerTagOpts:   file.Docker.TagOpts,
@@ -70,10 +71,10 @@ func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.C
 	return container
 }
 
-// Step2 (formerly CommandSequenceFromInstructionSet) turns an InstructionSet struct into a
+// step2 (formerly CommandSequenceFromInstructionSet) turns an InstructionSet struct into a
 // CommandSequence struct - one of the intermediate steps to building, will
 // eventually be made private
-func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
+func (parser *Parser) step2(is *InstructionSet) *CommandSequence {
 	ret := &CommandSequence{
 		Commands: []*SubSequence{},
 	}
