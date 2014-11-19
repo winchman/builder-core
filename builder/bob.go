@@ -29,7 +29,7 @@ A Builder is the struct that actually does the work of moving files around and
 executing the commands that do the docker build.
 */
 type Builder struct {
-	dockerClient *dockerclient.DockerClient
+	dockerClient dockerclient.DockerClient
 	*logrus.Logger
 	workdir         string
 	isRegular       bool

@@ -61,7 +61,7 @@
 		},
 		{
 			"ImportPath": "github.com/rafecolton/go-dockerclient-quick",
-			"Rev": "33a0abea3f83d15f50ad2f34dc4b60b1c7bbd7fc"
+			"Rev": "9f9d910759c1fdb03518dac33c25435b4cd5ac23"
 		},
 		{
 			"ImportPath": "github.com/rafecolton/go-dockerclient-sort",
