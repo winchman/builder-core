@@ -62,8 +62,6 @@ such as the name of the Dockerfile and which files/dirs to exclude.
 type SubSequenceMetadata struct {
 	Name       string
 	Dockerfile string
-	Included   []string
-	Excluded   []string
 	UUID       string
 	SkipPush   bool
 }
