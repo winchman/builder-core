@@ -12,6 +12,7 @@ install:
 - make build
 script:
 - make test
+after_success:
 - make goveralls
 env:
   global:
