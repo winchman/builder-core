@@ -1,7 +1,6 @@
 package parser
 
 import (
-	//"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -32,8 +31,23 @@ var expectedCommandSequence = &CommandSequence{
 				Dockerfile: "Dockerfile",
 			},
 			SubCommand: []DockerCmd{
-				&BuildCmd{opts: nil, buildOpts: docker.BuildImageOptions{Name: "quay.io/rafecolton/build-runner-test:9af73a34-ab4a-4d76-593b-fda4a5d1a988", NoCache: false, SuppressOutput: false, RmTmpContainer: true, ForceRmTmpContainer: false, RawJSONStream: false, Remote: "", Auth: docker.AuthConfiguration{Username: "", Password: "", Email: "", ServerAddress: ""}, AuthConfigs: docker.AuthConfigurations{Configs: map[string]docker.AuthConfiguration{"quay.io/rafecolton": docker.AuthConfiguration{Username: "", Password: "", Email: "", ServerAddress: "quay.io/rafecolton"}}}, ContextDir: "/Users/r.colton/.gvm/pkgsets/go1.3.3/global/src/github.com/sylphon/build-runner/parser"}, origBuildOpts: []string(nil)},
-				&TagCmd{TagFunc: (func(string, docker.TagImageOptions) error)(nil), Image: "", Force: false, Tag: "latest", Repo: "quay.io/rafecolton/build-runner-test", msg: ""},
+				&BuildCmd{
+					buildOpts: docker.BuildImageOptions{
+						Name:           "quay.io/rafecolton/build-runner-test:9af73a34-ab4a-4d76-593b-fda4a5d1a988",
+						RmTmpContainer: true,
+						AuthConfigs: docker.AuthConfigurations{
+							Configs: map[string]docker.AuthConfiguration{
+								"quay.io/rafecolton": docker.AuthConfiguration{
+									ServerAddress: "quay.io/rafecolton",
+								},
+							},
+						},
+						ContextDir: os.Getenv("GOPATH") + "/src/github.com/sylphon/build-runner/parser"},
+				},
+				&TagCmd{
+					Tag:  "latest",
+					Repo: "quay.io/rafecolton/build-runner-test",
+				},
 			},
 		},
 	},
