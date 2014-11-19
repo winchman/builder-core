@@ -5,13 +5,13 @@ import (
 	"os"
 
 	"github.com/sylphon/build-runner"
-	"github.com/sylphon/build-runner/builderfile"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
-var example = &builderfile.UnitConfig{
+var example = &unitconfig.UnitConfig{
 	Version: 1,
-	ContainerArr: []*builderfile.ContainerSection{
-		&builderfile.ContainerSection{
+	ContainerArr: []*unitconfig.ContainerSection{
+		&unitconfig.ContainerSection{
 			Name:       "app",
 			Dockerfile: "Dockerfile",
 			Registry:   "quay.io/rafecolton",
@@ -23,7 +23,7 @@ var example = &builderfile.UnitConfig{
 }
 
 func main() {
-	if err := buildrunner.RunBuild(example, os.Getenv("GOPATH")+"/src/github.com/rafecolton/docker-builder"); err != nil {
+	if err := runner.RunBuild(example, os.Getenv("GOPATH")+"/src/github.com/rafecolton/docker-builder"); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

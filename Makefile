@@ -22,6 +22,7 @@ monkey-patch-drone:
 .PHONY: test
 test: fmtpolice
 	go test ./...
+	@find . -type f -name '*.test' -exec rm {} \;
 
 .PHONY: fmtpolice
 fmtpolice: $(PWD)/fmtpolice

@@ -1,26 +1,14 @@
-package builderfile
-
-import (
-	"github.com/Sirupsen/logrus"
-)
-
-var logger *logrus.Logger
-
-//Logger sets the (global) logger for the builderfile package
-func Logger(l *logrus.Logger) {
-	logger = l
-}
+package unitconfig
 
 /*
 UnitConfig is a struct representation of what is expected to be inside a
 Builderfile for a single build/tag/push sequence.
 */
 type UnitConfig struct {
-	Version          int                         `toml:"version"`
-	Docker           Docker                      `toml:"docker"`
-	Containers       map[string]ContainerSection `toml:"containers"`
-	ContainerArr     []*ContainerSection         `toml:"container"`
-	ContainerGlobals *ContainerSection           `toml:"container_globals"`
+	Version          int                 `toml:"version"`
+	Docker           Docker              `toml:"docker"`
+	ContainerArr     []*ContainerSection `toml:"container"`
+	ContainerGlobals *ContainerSection   `toml:"container_globals"`
 }
 
 /*
@@ -39,8 +27,6 @@ be built and other related options.
 type ContainerSection struct {
 	Name       string   `toml:"name"`
 	Dockerfile string   `toml:"Dockerfile"`
-	Included   []string `toml:"included"`
-	Excluded   []string `toml:"excluded"`
 	Registry   string   `toml:"registry"`
 	Project    string   `toml:"project"`
 	Tags       []string `toml:"tags"`

@@ -2,15 +2,79 @@ package parser
 
 import (
 	"github.com/fsouza/go-dockerclient"
+	gouuid "github.com/nu7hatch/gouuid"
 
-	"github.com/sylphon/build-runner/builderfile"
-	"github.com/sylphon/build-runner/parser/tag"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
-// CommandSequenceFromInstructionSet turns an InstructionSet struct into a
+// Parse - does the parsing!
+func (parser *Parser) Parse(file *unitconfig.UnitConfig) *CommandSequence {
+	return parser.step2(parser.step1(file))
+}
+
+// step1 (formerly InstructionSetFromBuilderfileStruct) turns a UnitConfig
+// struct into an InstructionSet struct - one of the intermediate steps to
+// building, will eventually be made private
+func (parser *Parser) step1(file *unitconfig.UnitConfig) *InstructionSet {
+	ret := &InstructionSet{
+		DockerBuildOpts: file.Docker.BuildOpts,
+		DockerTagOpts:   file.Docker.TagOpts,
+		Containers:      []unitconfig.ContainerSection{},
+	}
+
+	if file.ContainerArr == nil {
+		file.ContainerArr = []*unitconfig.ContainerSection{}
+	}
+
+	if file.ContainerGlobals == nil {
+		file.ContainerGlobals = &unitconfig.ContainerSection{}
+	}
+	globals := file.ContainerGlobals
+
+	for _, container := range file.ContainerArr {
+		container = mergeGlobals(container, globals)
+		ret.Containers = append(ret.Containers, *container)
+	}
+
+	return ret
+}
+
+func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.ContainerSection {
+	if container.Dockerfile == "" {
+		container.Dockerfile = globals.Dockerfile
+	}
+	if container.Registry == "" {
+		container.Registry = globals.Registry
+	}
+	if container.Project == "" {
+		container.Project = globals.Project
+	}
+	if container.CfgUn == "" {
+		container.CfgUn = globals.CfgUn
+	}
+	if container.CfgPass == "" {
+		container.CfgPass = globals.CfgPass
+	}
+	if container.CfgEmail == "" {
+		container.CfgEmail = globals.CfgEmail
+	}
+
+	if container.Tags == nil {
+		container.Tags = []string{}
+	}
+	if len(container.Tags) == 0 && globals.Tags != nil {
+		container.Tags = globals.Tags
+	}
+
+	container.SkipPush = container.SkipPush || globals.SkipPush
+
+	return container
+}
+
+// step2 (formerly CommandSequenceFromInstructionSet) turns an InstructionSet struct into a
 // CommandSequence struct - one of the intermediate steps to building, will
 // eventually be made private
-func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *CommandSequence {
+func (parser *Parser) step2(is *InstructionSet) *CommandSequence {
 	ret := &CommandSequence{
 		Commands: []*SubSequence{},
 	}
@@ -25,13 +89,13 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 		pushCommands = []DockerCmd{}
 
 		// ADD BUILD COMMAND
-		uuid, err := parser.NextUUID()
+		uuid, err := gouuid.NewV4()
 		if err != nil {
 			return nil
 		}
 
 		name := v.Registry + "/" + v.Project
-		initialTag := name + ":" + uuid
+		initialTag := name + ":" + uuid.String()
 
 		// get docker registry credentials
 		un := v.CfgUn
@@ -41,7 +105,7 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 		buildOpts := docker.BuildImageOptions{
 			Name:           initialTag,
 			RmTmpContainer: true,
-			ContextDir:     parser.top,
+			ContextDir:     parser.contextDir,
 			Auth: docker.AuthConfiguration{
 				Username: un,
 				Password: pass,
@@ -50,8 +114,8 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 			AuthConfigs: docker.AuthConfigurations{
 				Configs: map[string]docker.AuthConfiguration{
 					v.Registry: docker.AuthConfiguration{
-						Username:      un,
 						Password:      pass,
+						Username:      un,
 						Email:         email,
 						ServerAddress: v.Registry,
 					},
@@ -80,22 +144,12 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 		})
 
 		// ADD TAG COMMANDS
-		for _, t := range v.Tags {
-			var tagObj tag.Tag
-			tagArg := map[string]string{
-				"tag": t,
-				"top": parser.top,
-			}
-
-			if len(t) > 4 && t[0:4] == "git:" {
-				tagObj = tag.NewTag("git", tagArg)
-			} else {
-				tagObj = tag.NewTag("default", tagArg)
-			}
+		for _, provided := range v.Tags {
+			var tagValue = NewTag(provided).Evaluate(parser.contextDir)
 
 			tagCmd := &TagCmd{
 				Repo: name,
-				Tag:  tagObj.Tag(),
+				Tag:  tagValue,
 			}
 			for _, opt := range is.DockerTagOpts {
 				if opt == "-f" || opt == "--force" {
@@ -109,7 +163,7 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 			if !v.SkipPush {
 				pushCmd := &PushCmd{
 					Image:     name,
-					Tag:       tagObj.Tag(),
+					Tag:       tagValue,
 					AuthUn:    un,
 					AuthPwd:   pass,
 					AuthEmail: email,
@@ -126,78 +180,10 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 			Metadata: &SubSequenceMetadata{
 				Name:       v.Name,
 				Dockerfile: v.Dockerfile,
-				Included:   v.Included,
-				Excluded:   v.Excluded,
-				UUID:       uuid,
+				UUID:       uuid.String(),
 			},
 			SubCommand: containerCommands,
 		})
-	}
-
-	return ret
-}
-
-func mergeGlobals(container, globals *builderfile.ContainerSection) *builderfile.ContainerSection {
-
-	if container.Tags == nil {
-		container.Tags = []string{}
-	}
-
-	if container.Dockerfile == "" {
-		container.Dockerfile = globals.Dockerfile
-	}
-
-	if container.Registry == "" {
-		container.Registry = globals.Registry
-	}
-
-	if container.Project == "" {
-		container.Project = globals.Project
-	}
-
-	if len(container.Tags) == 0 && globals.Tags != nil {
-		container.Tags = globals.Tags
-	}
-
-	container.SkipPush = container.SkipPush || globals.SkipPush
-
-	if container.CfgUn == "" {
-		container.CfgUn = globals.CfgUn
-	}
-
-	if container.CfgPass == "" {
-		container.CfgPass = globals.CfgPass
-	}
-
-	if container.CfgEmail == "" {
-		container.CfgEmail = globals.CfgEmail
-	}
-
-	return container
-}
-
-// InstructionSetFromBuilderfileStruct turns a UnitConfig struct into an
-// InstructionSet struct - one of the intermediate steps to building, will
-// eventually be made private
-func (parser *Parser) InstructionSetFromBuilderfileStruct(file *builderfile.UnitConfig) *InstructionSet {
-	ret := &InstructionSet{
-		DockerBuildOpts: file.Docker.BuildOpts,
-		DockerTagOpts:   file.Docker.TagOpts,
-		Containers:      []builderfile.ContainerSection{},
-	}
-
-	if file.ContainerArr == nil {
-		file.ContainerArr = []*builderfile.ContainerSection{}
-	}
-
-	if file.ContainerGlobals == nil {
-		file.ContainerGlobals = &builderfile.ContainerSection{}
-	}
-	globals := file.ContainerGlobals
-
-	for _, container := range file.ContainerArr {
-		container = mergeGlobals(container, globals)
-		ret.Containers = append(ret.Containers, *container)
 	}
 
 	return ret
