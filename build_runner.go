@@ -51,13 +51,6 @@ func RunBuild(unitConfig *builderfile.UnitConfig, contextDir string, channels ..
 	if unitConfig == nil {
 		return errors.New("unit config may not be nil")
 	}
-	if unitConfig.Version == 0 {
-		unitConfig, err = builderfile.Convert0to1(unitConfig)
-	}
-
-	if err = unitConfig.HandleDeprecatedStanzas(); err != nil {
-		return err
-	}
 
 	opts := parser.NewParserOptions{ContextDir: contextDir, Logger: logger}
 	p = parser.NewParser(opts)

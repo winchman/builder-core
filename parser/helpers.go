@@ -126,8 +126,6 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 			Metadata: &SubSequenceMetadata{
 				Name:       v.Name,
 				Dockerfile: v.Dockerfile,
-				Included:   v.Included,
-				Excluded:   v.Excluded,
 				UUID:       uuid,
 			},
 			SubCommand: containerCommands,
