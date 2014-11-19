@@ -39,40 +39,33 @@ func (parser *Parser) Step1(file *unitconfig.UnitConfig) *InstructionSet {
 }
 
 func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.ContainerSection {
+	if container.Dockerfile == "" {
+		container.Dockerfile = globals.Dockerfile
+	}
+	if container.Registry == "" {
+		container.Registry = globals.Registry
+	}
+	if container.Project == "" {
+		container.Project = globals.Project
+	}
+	if container.CfgUn == "" {
+		container.CfgUn = globals.CfgUn
+	}
+	if container.CfgPass == "" {
+		container.CfgPass = globals.CfgPass
+	}
+	if container.CfgEmail == "" {
+		container.CfgEmail = globals.CfgEmail
+	}
 
 	if container.Tags == nil {
 		container.Tags = []string{}
 	}
-
-	if container.Dockerfile == "" {
-		container.Dockerfile = globals.Dockerfile
-	}
-
-	if container.Registry == "" {
-		container.Registry = globals.Registry
-	}
-
-	if container.Project == "" {
-		container.Project = globals.Project
-	}
-
 	if len(container.Tags) == 0 && globals.Tags != nil {
 		container.Tags = globals.Tags
 	}
 
 	container.SkipPush = container.SkipPush || globals.SkipPush
-
-	if container.CfgUn == "" {
-		container.CfgUn = globals.CfgUn
-	}
-
-	if container.CfgPass == "" {
-		container.CfgPass = globals.CfgPass
-	}
-
-	if container.CfgEmail == "" {
-		container.CfgEmail = globals.CfgEmail
-	}
 
 	return container
 }
