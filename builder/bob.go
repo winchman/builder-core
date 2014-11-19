@@ -1,12 +1,14 @@
 package builder
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"regexp"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/fsouza/go-dockerclient"
 	"github.com/modcloth/go-fileutils"
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
@@ -40,6 +42,20 @@ type Builder struct {
 	contextDir      string
 }
 
+type nullClient struct{}
+
+func (client *nullClient) Client() *docker.Client {
+	return nil
+}
+
+func (client *nullClient) LatestImageIDByName(name string) (string, error) {
+	return name, nil
+}
+
+func (client *nullClient) LatestImageIDByTag(tag string) (string, error) {
+	return tag, nil
+}
+
 /*
 SetNextSubSequence sets the next subsequence within bob to be processed. This
 function is exported because it is used explicitly in tests, but in Build(), it
@@ -52,8 +68,9 @@ func (bob *Builder) SetNextSubSequence(subSeq *parser.SubSequence) {
 // NewBuilderOptions encapsulates all of the options necessary for creating a
 // new builder
 type NewBuilderOptions struct {
-	Logger     *logrus.Logger
-	ContextDir string
+	Logger       *logrus.Logger
+	ContextDir   string
+	dockerClient dockerclient.DockerClient
 }
 
 /*
@@ -67,10 +84,13 @@ func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
 		logger.Level = logrus.PanicLevel
 	}
 
-	client, err := dockerclient.NewDockerClient()
-
-	if err != nil {
-		return nil, err
+	var client = opts.dockerClient
+	if client == nil {
+		var err error
+		client, err = dockerclient.NewDockerClient()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	stdout := log.NewOutWriter(logger, "         %s")
@@ -124,13 +144,19 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 
 			bob.WithField("command", cmd.Message()).Info("running docker command")
 
-			if imageID, err = cmd.Run(); err != nil {
-				return &BuildRelatedError{
-					Message: err.Error(),
+			switch opts.DockerClient.(type) {
+			case *nullClient:
+				fmt.Println(cmd.Message())
+				continue
+			default:
+				if imageID, err = cmd.Run(); err != nil {
+					return &BuildRelatedError{
+						Message: err.Error(),
+					}
 				}
+				bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
 			}
 		}
-		bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
 	}
 	return nil
 }
