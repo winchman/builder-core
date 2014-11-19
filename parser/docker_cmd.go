@@ -13,7 +13,7 @@ DockerCmdOpts is an options struct for the options required by the various
 structs that implement the DockerCmd interface
 */
 type DockerCmdOpts struct {
-	DockerClient *dockerclient.DockerClient
+	DockerClient dockerclient.DockerClient
 	Image        string
 	Workdir      string
 	Stdout       io.Writer
