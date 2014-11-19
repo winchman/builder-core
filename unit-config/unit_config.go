@@ -1,4 +1,4 @@
-package builderfile
+package unitconfig
 
 import (
 	"github.com/Sirupsen/logrus"

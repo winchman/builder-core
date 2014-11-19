@@ -5,8 +5,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sylphon/build-runner/builder"
-	"github.com/sylphon/build-runner/builderfile"
 	"github.com/sylphon/build-runner/parser"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
 // Stream corresponds to a file stream (stdout/stderr)
@@ -37,10 +37,10 @@ type StatusMsg interface {
 	Error() error // should be checked for non-nil
 }
 
-// RunBuild runs a complete build for the provided Builderfile.  Currently, the
+// RunBuild runs a complete build for the provided unit config.  Currently, the
 // channels argument is ignored but will be used in the future along with the
 // LogMsg and StatusMsg interfaces
-func RunBuild(unitConfig *builderfile.UnitConfig, contextDir string, channels ...chan interface{}) error {
+func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string, channels ...chan interface{}) error {
 	var err error
 	var logger = logrus.New()
 	var p *parser.Parser

@@ -3,7 +3,7 @@ package parser
 import (
 	"github.com/Sirupsen/logrus"
 
-	"github.com/sylphon/build-runner/builderfile"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
 /*
@@ -28,7 +28,7 @@ default values are assigned to a new Parser, but useful to have in case we need
 to change this.
 */
 func NewParser(opts NewParserOptions) *Parser {
-	builderfile.Logger(opts.Logger)
+	unitconfig.Logger(opts.Logger)
 	return &Parser{
 		Logger: opts.Logger,
 		top:    opts.ContextDir,

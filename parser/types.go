@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/sylphon/build-runner/builderfile"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
 /*
@@ -13,7 +13,7 @@ the sections for the individual containers.
 type InstructionSet struct {
 	DockerBuildOpts []string
 	DockerTagOpts   []string
-	Containers      []builderfile.ContainerSection
+	Containers      []unitconfig.ContainerSection
 }
 
 /*

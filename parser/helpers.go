@@ -3,7 +3,7 @@ package parser
 import (
 	"github.com/fsouza/go-dockerclient"
 
-	"github.com/sylphon/build-runner/builderfile"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
 // CommandSequenceFromInstructionSet turns an InstructionSet struct into a
@@ -134,7 +134,7 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 	return ret
 }
 
-func mergeGlobals(container, globals *builderfile.ContainerSection) *builderfile.ContainerSection {
+func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.ContainerSection {
 
 	if container.Tags == nil {
 		container.Tags = []string{}
@@ -176,19 +176,19 @@ func mergeGlobals(container, globals *builderfile.ContainerSection) *builderfile
 // InstructionSetFromBuilderfileStruct turns a UnitConfig struct into an
 // InstructionSet struct - one of the intermediate steps to building, will
 // eventually be made private
-func (parser *Parser) InstructionSetFromBuilderfileStruct(file *builderfile.UnitConfig) *InstructionSet {
+func (parser *Parser) InstructionSetFromBuilderfileStruct(file *unitconfig.UnitConfig) *InstructionSet {
 	ret := &InstructionSet{
 		DockerBuildOpts: file.Docker.BuildOpts,
 		DockerTagOpts:   file.Docker.TagOpts,
-		Containers:      []builderfile.ContainerSection{},
+		Containers:      []unitconfig.ContainerSection{},
 	}
 
 	if file.ContainerArr == nil {
-		file.ContainerArr = []*builderfile.ContainerSection{}
+		file.ContainerArr = []*unitconfig.ContainerSection{}
 	}
 
 	if file.ContainerGlobals == nil {
-		file.ContainerGlobals = &builderfile.ContainerSection{}
+		file.ContainerGlobals = &unitconfig.ContainerSection{}
 	}
 	globals := file.ContainerGlobals
 
