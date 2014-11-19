@@ -6,7 +6,8 @@ import (
 
 // TODO: add template-based tagging, do away with the rest of this
 
-type tag struct {
+// Tag is for tagging
+type Tag struct {
 	value string
 }
 
@@ -14,11 +15,12 @@ type tag struct {
 NewTag returns a Tag instance.  See function implementation for details on what
 args to pass.
 */
-func NewTag(value string) tag {
-	return tag{value: value}
+func NewTag(value string) Tag {
+	return Tag{value: value}
 }
 
-func (t tag) Evaluate(top string) string {
+// Evaluate evaluates any git-based tags
+func (t Tag) Evaluate(top string) string {
 	var ret string
 
 	switch t.value {
