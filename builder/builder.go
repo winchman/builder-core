@@ -118,7 +118,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 		var err error
 
 		if err := bob.cleanWorkdir(); err != nil {
-			return &BuildRelatedError{
+			return &buildRelatedError{
 				Message: err.Error(),
 			}
 		}
@@ -150,7 +150,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 				continue
 			default:
 				if imageID, err = cmd.Run(); err != nil {
-					return &BuildRelatedError{
+					return &buildRelatedError{
 						Message: err.Error(),
 					}
 				}
@@ -185,7 +185,7 @@ func (bob *Builder) setup() Error {
 	var bErr Error
 
 	if bob.nextSubSequence == nil {
-		return &BuildRelatedError{
+		return &buildRelatedError{
 			Message: "no command sub sequence set, cannot perform setup",
 			Code:    1,
 		}
@@ -195,7 +195,7 @@ func (bob *Builder) setup() Error {
 	dockerfile := meta.Dockerfile
 	pathToDockerfile, err = NewTrustedFilePath(dockerfile, bob.contextDir)
 	if err != nil {
-		return &BuildRelatedError{
+		return &buildRelatedError{
 			Message: err.Error(),
 			Code:    1,
 		}
@@ -211,7 +211,7 @@ func (bob *Builder) setup() Error {
 		Excludes:    []string{"Dockerfile"},
 	})
 	if err != nil {
-		return &BuildRelatedError{
+		return &buildRelatedError{
 			Message: err.Error(),
 			Code:    1,
 		}
@@ -219,13 +219,13 @@ func (bob *Builder) setup() Error {
 
 	defer tarStream.Close()
 	if err := archive.Untar(tarStream, workdir, nil); err != nil {
-		return &BuildRelatedError{
+		return &buildRelatedError{
 			Message: err.Error(),
 			Code:    1,
 		}
 	}
 	if err := fileutils.CpWithArgs(contextDir+"/"+meta.Dockerfile, workdir+"/Dockerfile", fileutils.CpArgs{PreserveModTime: true}); err != nil {
-		return &BuildRelatedError{
+		return &buildRelatedError{
 			Message: err.Error(),
 			Code:    1,
 		}

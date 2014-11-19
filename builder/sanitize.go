@@ -9,19 +9,19 @@ import (
 const (
 	// DotDotSanitizeErrorMessage is the error message used in errors that occur
 	// because a provided Bobfile path contains ".."
-	DotDotSanitizeErrorMessage = "file path must not contain .."
+	dotDotSanitizeErrorMessage = "file path must not contain .."
 
 	// InvalidPathSanitizeErrorMessage is the error message used in errors that
 	// occur because a provided Bobfile path is invalid
-	InvalidPathSanitizeErrorMessage = "file path is invalid"
+	invalidPathSanitizeErrorMessage = "file path is invalid"
 
 	// SymlinkSanitizeErrorMessage is the error message used in errors that
 	// occur because a provided Bobfile path contains symlinks
-	SymlinkSanitizeErrorMessage = "file path must not contain symlinks"
+	symlinkSanitizeErrorMessage = "file path must not contain symlinks"
 
 	// DoesNotExistSanitizeErrorMessage is the error message used in cases
 	// where the error results in the requested file not existing
-	DoesNotExistSanitizeErrorMessage = "file requested does not exist"
+	doesNotExistSanitizeErrorMessage = "file requested does not exist"
 )
 
 var dotDotRegex = regexp.MustCompile(`\.\.`)
@@ -33,16 +33,16 @@ func SanitizeTrustedFilePath(trustedFilePath *TrustedFilePath) (*TrustedFilePath
 	var top = trustedFilePath.Top()
 
 	if dotDotRegex.MatchString(file) {
-		return nil, &SanitizeError{
-			Message:  DotDotSanitizeErrorMessage,
+		return nil, &sanitizeError{
+			Message:  dotDotSanitizeErrorMessage,
 			Filename: file,
 		}
 	}
 
 	abs, err := filepath.Abs(top + "/" + file)
 	if err != nil {
-		return nil, &SanitizeError{
-			Message:  InvalidPathSanitizeErrorMessage,
+		return nil, &sanitizeError{
+			Message:  invalidPathSanitizeErrorMessage,
 			error:    err,
 			Filename: file,
 		}
@@ -50,11 +50,11 @@ func SanitizeTrustedFilePath(trustedFilePath *TrustedFilePath) (*TrustedFilePath
 
 	resolved, err := filepath.EvalSymlinks(abs)
 	if err != nil {
-		msg := InvalidPathSanitizeErrorMessage
+		msg := invalidPathSanitizeErrorMessage
 		if os.IsNotExist(err) {
-			msg = DoesNotExistSanitizeErrorMessage
+			msg = doesNotExistSanitizeErrorMessage
 		}
-		return nil, &SanitizeError{
+		return nil, &sanitizeError{
 			Message:  msg,
 			error:    err,
 			Filename: file,
@@ -62,8 +62,8 @@ func SanitizeTrustedFilePath(trustedFilePath *TrustedFilePath) (*TrustedFilePath
 	}
 
 	if abs != resolved {
-		return nil, &SanitizeError{
-			Message:  SymlinkSanitizeErrorMessage,
+		return nil, &sanitizeError{
+			Message:  symlinkSanitizeErrorMessage,
 			Filename: file,
 		}
 	}
