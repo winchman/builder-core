@@ -4,7 +4,6 @@ import (
 	"github.com/Sirupsen/logrus"
 
 	"github.com/sylphon/build-runner/builderfile"
-	"github.com/sylphon/build-runner/parser/uuid"
 )
 
 /*
@@ -14,8 +13,7 @@ tell if the Builderfile is valid (openable) or nat.
 */
 type Parser struct {
 	*logrus.Logger
-	uuidGenerator uuid.Generator
-	top           string
+	top string
 }
 
 // NewParserOptions encapsulates all of the options necessary when creating a new parser
@@ -32,8 +30,7 @@ to change this.
 func NewParser(opts NewParserOptions) *Parser {
 	builderfile.Logger(opts.Logger)
 	return &Parser{
-		Logger:        opts.Logger,
-		uuidGenerator: uuid.NewUUIDGenerator(),
-		top:           opts.ContextDir,
+		Logger: opts.Logger,
+		top:    opts.ContextDir,
 	}
 }

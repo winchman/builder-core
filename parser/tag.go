@@ -1,4 +1,4 @@
-package tag
+package parser
 
 import (
 	"github.com/sylphon/build-runner/git"

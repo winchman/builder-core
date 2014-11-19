@@ -23,7 +23,7 @@ var example = &builderfile.UnitConfig{
 }
 
 func main() {
-	if err := buildrunner.RunBuild(example, os.Getenv("GOPATH")+"/src/github.com/rafecolton/docker-builder"); err != nil {
+	if err := runner.RunBuild(example, os.Getenv("GOPATH")+"/src/github.com/rafecolton/docker-builder"); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

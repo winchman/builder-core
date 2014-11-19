@@ -4,7 +4,6 @@ import (
 	"github.com/fsouza/go-dockerclient"
 
 	"github.com/sylphon/build-runner/builderfile"
-	"github.com/sylphon/build-runner/parser/tag"
 )
 
 // CommandSequenceFromInstructionSet turns an InstructionSet struct into a
@@ -25,7 +24,7 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 		pushCommands = []DockerCmd{}
 
 		// ADD BUILD COMMAND
-		uuid, err := parser.NextUUID()
+		uuid, err := nextUUID()
 		if err != nil {
 			return nil
 		}
@@ -50,8 +49,8 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 			AuthConfigs: docker.AuthConfigurations{
 				Configs: map[string]docker.AuthConfiguration{
 					v.Registry: docker.AuthConfiguration{
-						Username:      un,
 						Password:      pass,
+						Username:      un,
 						Email:         email,
 						ServerAddress: v.Registry,
 					},
@@ -81,16 +80,16 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 
 		// ADD TAG COMMANDS
 		for _, t := range v.Tags {
-			var tagObj tag.Tag
+			var tagObj Tag
 			tagArg := map[string]string{
 				"tag": t,
 				"top": parser.top,
 			}
 
 			if len(t) > 4 && t[0:4] == "git:" {
-				tagObj = tag.NewTag("git", tagArg)
+				tagObj = NewTag("git", tagArg)
 			} else {
-				tagObj = tag.NewTag("default", tagArg)
+				tagObj = NewTag("default", tagArg)
 			}
 
 			tagCmd := &TagCmd{
