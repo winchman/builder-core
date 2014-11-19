@@ -136,7 +136,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 }
 
 func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
-	repoWithTag, err := bob.dockerClient.LatestImageIDByName(uuid)
+	repoWithTag, err := bob.dockerClient.LatestImageIDByTag(uuid)
 	if err != nil {
 		bob.WithField("err", err).Warn("error getting repo taggged with temporary tag")
 	}

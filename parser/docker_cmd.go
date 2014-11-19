@@ -65,7 +65,7 @@ func (b *BuildCmd) Run() (string, error) {
 		return "", err
 	}
 
-	imageID, err := opts.DockerClient.LatestImageIDByName(opts.ImageUUID)
+	imageID, err := opts.DockerClient.LatestImageIDByTag(opts.ImageUUID)
 	if err != nil {
 		return "", err
 	}

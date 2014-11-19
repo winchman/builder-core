@@ -27,14 +27,17 @@ func NewTag(value string) Tag {
 }
 
 func (t *tag) Evaluate(top string) string {
+	var ret string
+
 	switch t.value {
 	case "git:branch":
-		return git.Branch(top)
+		ret = git.Branch(top)
 	case "git:rev", "git:sha":
-		return git.Sha(top)
+		ret = git.Sha(top)
 	case "git:short", "git:tag":
-		return git.Tag(top)
+		ret = git.Tag(top)
 	default:
-		return t.value
+		ret = t.value
 	}
+	return ret
 }
