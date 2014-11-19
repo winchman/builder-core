@@ -10,49 +10,24 @@ import (
 Tag is the interface for specifying tags for container builds.
 */
 type Tag interface {
-	Tag() string
+	Evaluate(top string) (result string)
+}
+
+// used for git-based tags
+type tag struct {
+	value string
 }
 
 /*
 NewTag returns a Tag instance.  See function implementation for details on what
 args to pass.
 */
-func NewTag(version string, args map[string]string) Tag {
-	switch version {
-	case "git":
-		return &gitTag{
-			tag: args["tag"],
-			top: args["top"],
-		}
-	default:
-		return &stringTag{
-			tag: args["tag"],
-		}
-	}
+func NewTag(value string) Tag {
+	return &tag{value: value}
 }
 
-// used for git-based tags
-type gitTag struct {
-	tag string
-	top string
-}
-
-// used for "as-is" tags
-type stringTag struct {
-	tag string
-}
-
-/*
-Tag, for a special set of macros (currently `git:branch`, `git:sha`,
-& `git:tag`) returns git information from the directory in which bob was run.
-These macros are specified in args["tag"], and to work properly, args["top"]
-must be supplied as well.  If any of the conditions are not met, Tag returns
-"".
-*/
-func (gt *gitTag) Tag() string {
-	var top = gt.top
-
-	switch gt.tag {
+func (t *tag) Evaluate(top string) string {
+	switch t.value {
 	case "git:branch":
 		return git.Branch(top)
 	case "git:rev", "git:sha":
@@ -60,14 +35,6 @@ func (gt *gitTag) Tag() string {
 	case "git:short", "git:tag":
 		return git.Tag(top)
 	default:
-		return ""
+		return t.value
 	}
-}
-
-/*
-Tag returns the string in args["tag"], which is the string provided as-is in
-the config file
-*/
-func (tag *stringTag) Tag() string {
-	return tag.tag
 }

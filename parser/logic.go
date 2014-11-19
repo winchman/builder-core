@@ -88,13 +88,13 @@ func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 		pushCommands = []DockerCmd{}
 
 		// ADD BUILD COMMAND
-		uuid, err := nextUUID()
+		uuid, err := gouuid.NewV4()
 		if err != nil {
 			return nil
 		}
 
 		name := v.Registry + "/" + v.Project
-		initialTag := name + ":" + uuid
+		initialTag := name + ":" + uuid.String()
 
 		// get docker registry credentials
 		un := v.CfgUn
@@ -143,22 +143,12 @@ func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 		})
 
 		// ADD TAG COMMANDS
-		for _, t := range v.Tags {
-			var tagObj Tag
-			tagArg := map[string]string{
-				"tag": t,
-				"top": parser.contextDir,
-			}
-
-			if len(t) > 4 && t[0:4] == "git:" {
-				tagObj = NewTag("git", tagArg)
-			} else {
-				tagObj = NewTag("default", tagArg)
-			}
+		for _, provided := range v.Tags {
+			var tagValue = NewTag(provided).Evaluate(parser.contextDir)
 
 			tagCmd := &TagCmd{
 				Repo: name,
-				Tag:  tagObj.Tag(),
+				Tag:  tagValue,
 			}
 			for _, opt := range is.DockerTagOpts {
 				if opt == "-f" || opt == "--force" {
@@ -172,7 +162,7 @@ func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 			if !v.SkipPush {
 				pushCmd := &PushCmd{
 					Image:     name,
-					Tag:       tagObj.Tag(),
+					Tag:       tagValue,
 					AuthUn:    un,
 					AuthPwd:   pass,
 					AuthEmail: email,
@@ -189,19 +179,11 @@ func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 			Metadata: &SubSequenceMetadata{
 				Name:       v.Name,
 				Dockerfile: v.Dockerfile,
-				UUID:       uuid,
+				UUID:       uuid.String(),
 			},
 			SubCommand: containerCommands,
 		})
 	}
 
 	return ret
-}
-
-func nextUUID() (string, error) {
-	u, err := gouuid.NewV4()
-	if err != nil {
-		return "", err
-	}
-	return u.String(), nil
 }
