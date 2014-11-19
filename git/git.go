@@ -1,9 +1,7 @@
 package git
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -174,11 +172,6 @@ func Remotes(top string) string {
 		return ""
 	}
 	return string(outBytes)
-}
-
-// Repo produces the repo name as determined by the basename of $PWD
-func Repo(top string) string {
-	return filepath.Base(os.Getenv("PWD"))
 }
 
 ///////// HELPERS
