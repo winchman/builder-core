@@ -16,10 +16,10 @@ UnitConfig is a struct representation of what is expected to be inside a
 Builderfile for a single build/tag/push sequence.
 */
 type UnitConfig struct {
-	Version          int                         `toml:"version"`
-	Docker           Docker                      `toml:"docker"`
-	ContainerArr     []*ContainerSection         `toml:"container"`
-	ContainerGlobals *ContainerSection           `toml:"container_globals"`
+	Version          int                 `toml:"version"`
+	Docker           Docker              `toml:"docker"`
+	ContainerArr     []*ContainerSection `toml:"container"`
+	ContainerGlobals *ContainerSection   `toml:"container_globals"`
 }
 
 /*
