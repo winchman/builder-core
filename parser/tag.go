@@ -6,14 +6,6 @@ import (
 
 // TODO: add template-based tagging, do away with the rest of this
 
-/*
-Tag is the interface for specifying tags for container builds.
-*/
-type Tag interface {
-	Evaluate(top string) (result string)
-}
-
-// used for git-based tags
 type tag struct {
 	value string
 }
@@ -22,11 +14,11 @@ type tag struct {
 NewTag returns a Tag instance.  See function implementation for details on what
 args to pass.
 */
-func NewTag(value string) Tag {
-	return &tag{value: value}
+func NewTag(value string) tag {
+	return tag{value: value}
 }
 
-func (t *tag) Evaluate(top string) string {
+func (t tag) Evaluate(top string) string {
 	var ret string
 
 	switch t.value {
