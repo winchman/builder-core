@@ -104,7 +104,7 @@ func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 		buildOpts := docker.BuildImageOptions{
 			Name:           initialTag,
 			RmTmpContainer: true,
-			ContextDir:     parser.top,
+			ContextDir:     parser.contextDir,
 			Auth: docker.AuthConfiguration{
 				Username: un,
 				Password: pass,
@@ -147,7 +147,7 @@ func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 			var tagObj Tag
 			tagArg := map[string]string{
 				"tag": t,
-				"top": parser.top,
+				"top": parser.contextDir,
 			}
 
 			if len(t) > 4 && t[0:4] == "git:" {

@@ -12,7 +12,7 @@ tell if the Builderfile is valid (openable) or nat.
 */
 type Parser struct {
 	*logrus.Logger
-	top string
+	contextDir string
 }
 
 // NewParserOptions encapsulates all of the options necessary when creating a new parser
@@ -28,8 +28,8 @@ to change this.
 */
 func NewParser(opts NewParserOptions) *Parser {
 	return &Parser{
-		Logger: opts.Logger,
-		top:    opts.ContextDir,
+		Logger:     opts.Logger,
+		contextDir: opts.ContextDir,
 	}
 }
 
