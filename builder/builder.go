@@ -13,7 +13,6 @@ import (
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
 
-	"github.com/sylphon/build-runner/log"
 	"github.com/sylphon/build-runner/parser"
 )
 
@@ -93,12 +92,12 @@ func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
 		}
 	}
 
-	stdout := log.NewOutWriter(logger, "         %s")
-	stderr := log.NewOutWriter(logger, "         %s")
+	stdout := NewOutWriter(logger, "         %s")
+	stderr := NewOutWriter(logger, "         %s")
 
 	if logrus.IsTerminal() {
-		stdout = log.NewOutWriter(logger, "         @{g}%s@{|}")
-		stderr = log.NewOutWriter(logger, "         @{r}%s@{|}")
+		stdout = NewOutWriter(logger, "         @{g}%s@{|}")
+		stderr = NewOutWriter(logger, "         @{r}%s@{|}")
 	}
 
 	return &Builder{
