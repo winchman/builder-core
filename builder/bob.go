@@ -97,13 +97,13 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 		var imageID string
 		var err error
 
-		if err := bob.CleanWorkdir(); err != nil {
+		if err := bob.cleanWorkdir(); err != nil {
 			return &BuildRelatedError{
 				Message: err.Error(),
 			}
 		}
 		bob.SetNextSubSequence(seq)
-		if err := bob.Setup(); err != nil {
+		if err := bob.setup(); err != nil {
 			return err
 		}
 
@@ -118,7 +118,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 				SkipPush:     SkipPush,
 				Stderr:       bob.Stderr,
 				Stdout:       bob.Stdout,
-				Workdir:      bob.Workdir(),
+				Workdir:      bob.workdir,
 			}
 			cmd = cmd.WithOpts(opts)
 
@@ -152,8 +152,8 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 Setup moves all of the correct files into place in the temporary directory in
 order to perform the docker build.
 */
-func (bob *Builder) Setup() Error {
-	var workdir = bob.Workdir()
+func (bob *Builder) setup() Error {
+	var workdir = bob.workdir
 	var pathToDockerfile, sanitizedPathToDockerfile *TrustedFilePath
 	var err error
 	var bErr Error
@@ -167,7 +167,7 @@ func (bob *Builder) Setup() Error {
 
 	meta := bob.nextSubSequence.Metadata
 	dockerfile := meta.Dockerfile
-	pathToDockerfile, err = NewTrustedFilePath(dockerfile, bob.Repodir())
+	pathToDockerfile, err = NewTrustedFilePath(dockerfile, bob.contextDir)
 	if err != nil {
 		return &BuildRelatedError{
 			Message: err.Error(),
@@ -208,20 +208,6 @@ func (bob *Builder) Setup() Error {
 	return nil
 }
 
-/*
-Repodir is the dir from which we are using files for our docker builds.
-*/
-func (bob *Builder) Repodir() string {
-	return bob.contextDir
-}
-
-/*
-Workdir returns bob's working directory.
-*/
-func (bob *Builder) Workdir() string {
-	return bob.workdir
-}
-
 func (bob *Builder) generateWorkDir() string {
 	tmp, err := ioutil.TempDir("", "bob")
 	if err != nil {
@@ -236,10 +222,10 @@ func (bob *Builder) generateWorkDir() string {
 }
 
 /*
-CleanWorkdir effectively does a rm -rf and mkdir -p on bob's workdir.  Intended
+cleanWorkdir effectively does a rm -rf and mkdir -p on bob's workdir.  Intended
 to be used before using the workdir (i.e. before new command groups).
 */
-func (bob *Builder) CleanWorkdir() error {
+func (bob *Builder) cleanWorkdir() error {
 	workdir := bob.generateWorkDir()
 	bob.workdir = workdir
 
