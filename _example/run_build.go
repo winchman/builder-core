@@ -5,13 +5,13 @@ import (
 	"os"
 
 	"github.com/sylphon/build-runner"
-	"github.com/sylphon/build-runner/builderfile"
+	"github.com/sylphon/build-runner/unit-config"
 )
 
-var example = &builderfile.UnitConfig{
+var example = &unitconfig.UnitConfig{
 	Version: 1,
-	ContainerArr: []*builderfile.ContainerSection{
-		&builderfile.ContainerSection{
+	ContainerArr: []*unitconfig.ContainerSection{
+		&unitconfig.ContainerSection{
 			Name:       "app",
 			Dockerfile: "Dockerfile",
 			Registry:   "quay.io/rafecolton",
