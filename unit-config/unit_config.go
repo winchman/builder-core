@@ -1,16 +1,5 @@
 package unitconfig
 
-import (
-	"github.com/Sirupsen/logrus"
-)
-
-var logger *logrus.Logger
-
-//Logger sets the (global) logger for the builderfile package
-func Logger(l *logrus.Logger) {
-	logger = l
-}
-
 /*
 UnitConfig is a struct representation of what is expected to be inside a
 Builderfile for a single build/tag/push sequence.
