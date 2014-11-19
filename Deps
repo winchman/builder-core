@@ -68,6 +68,10 @@
 			"Rev": "127186d3d0bd6ae0867081a76324e1afe6dbf084"
 		},
 		{
+			"ImportPath": "github.com/rafecolton/go-gitutils",
+			"Rev": "50d1ab234ffa3df05162c8eae4dddef1d907faa8"
+		},
+		{
 			"ImportPath": "github.com/wsxiaoys/terminal/color",
 			"Rev": "9dcaf1d63119a8ac00eef82270eaef08b6aa2328"
 		}

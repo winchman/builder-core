@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/sylphon/build-runner/git"
+	"github.com/rafecolton/go-gitutils"
 )
 
 // TODO: add template-based tagging, do away with the rest of this
