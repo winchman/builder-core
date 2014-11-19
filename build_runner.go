@@ -43,8 +43,6 @@ type StatusMsg interface {
 func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string, channels ...chan interface{}) error {
 	var err error
 	var logger = logrus.New()
-	var p *parser.Parser
-	var bob *builder.Builder
 
 	logger.Level = logrus.DebugLevel
 
@@ -52,12 +50,13 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string, channels ...
 		return errors.New("unit config may not be nil")
 	}
 
+	var p *parser.Parser
 	opts := parser.NewParserOptions{ContextDir: contextDir, Logger: logger}
 	p = parser.NewParser(opts)
 
-	instructionSet := p.InstructionSetFromBuilderfileStruct(unitConfig)
-	commandSequence := p.CommandSequenceFromInstructionSet(instructionSet)
+	commandSequence := p.Parse(unitConfig)
 
+	var bob *builder.Builder
 	bobOpts := builder.NewBuilderOptions{ContextDir: contextDir, Logger: logger}
 	bob, err = builder.NewBuilder(bobOpts)
 	if err != nil {

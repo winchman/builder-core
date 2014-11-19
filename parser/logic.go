@@ -2,14 +2,85 @@ package parser
 
 import (
 	"github.com/fsouza/go-dockerclient"
+	gouuid "github.com/nu7hatch/gouuid"
 
 	"github.com/sylphon/build-runner/unit-config"
 )
 
-// CommandSequenceFromInstructionSet turns an InstructionSet struct into a
+func (parser *Parser) Parse(file *unitconfig.UnitConfig) *CommandSequence {
+	return parser.Step2(parser.Step1(file))
+}
+
+// Step1 (formerly InstructionSetFromBuilderfileStruct) turns a UnitConfig
+// struct into an InstructionSet struct - one of the intermediate steps to
+// building, will eventually be made private
+func (parser *Parser) Step1(file *unitconfig.UnitConfig) *InstructionSet {
+	ret := &InstructionSet{
+		DockerBuildOpts: file.Docker.BuildOpts,
+		DockerTagOpts:   file.Docker.TagOpts,
+		Containers:      []unitconfig.ContainerSection{},
+	}
+
+	if file.ContainerArr == nil {
+		file.ContainerArr = []*unitconfig.ContainerSection{}
+	}
+
+	if file.ContainerGlobals == nil {
+		file.ContainerGlobals = &unitconfig.ContainerSection{}
+	}
+	globals := file.ContainerGlobals
+
+	for _, container := range file.ContainerArr {
+		container = mergeGlobals(container, globals)
+		ret.Containers = append(ret.Containers, *container)
+	}
+
+	return ret
+}
+
+func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.ContainerSection {
+
+	if container.Tags == nil {
+		container.Tags = []string{}
+	}
+
+	if container.Dockerfile == "" {
+		container.Dockerfile = globals.Dockerfile
+	}
+
+	if container.Registry == "" {
+		container.Registry = globals.Registry
+	}
+
+	if container.Project == "" {
+		container.Project = globals.Project
+	}
+
+	if len(container.Tags) == 0 && globals.Tags != nil {
+		container.Tags = globals.Tags
+	}
+
+	container.SkipPush = container.SkipPush || globals.SkipPush
+
+	if container.CfgUn == "" {
+		container.CfgUn = globals.CfgUn
+	}
+
+	if container.CfgPass == "" {
+		container.CfgPass = globals.CfgPass
+	}
+
+	if container.CfgEmail == "" {
+		container.CfgEmail = globals.CfgEmail
+	}
+
+	return container
+}
+
+// Step2 (formerly CommandSequenceFromInstructionSet) turns an InstructionSet struct into a
 // CommandSequence struct - one of the intermediate steps to building, will
 // eventually be made private
-func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *CommandSequence {
+func (parser *Parser) Step2(is *InstructionSet) *CommandSequence {
 	ret := &CommandSequence{
 		Commands: []*SubSequence{},
 	}
@@ -134,68 +205,10 @@ func (parser *Parser) CommandSequenceFromInstructionSet(is *InstructionSet) *Com
 	return ret
 }
 
-func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.ContainerSection {
-
-	if container.Tags == nil {
-		container.Tags = []string{}
+func nextUUID() (string, error) {
+	u, err := gouuid.NewV4()
+	if err != nil {
+		return "", err
 	}
-
-	if container.Dockerfile == "" {
-		container.Dockerfile = globals.Dockerfile
-	}
-
-	if container.Registry == "" {
-		container.Registry = globals.Registry
-	}
-
-	if container.Project == "" {
-		container.Project = globals.Project
-	}
-
-	if len(container.Tags) == 0 && globals.Tags != nil {
-		container.Tags = globals.Tags
-	}
-
-	container.SkipPush = container.SkipPush || globals.SkipPush
-
-	if container.CfgUn == "" {
-		container.CfgUn = globals.CfgUn
-	}
-
-	if container.CfgPass == "" {
-		container.CfgPass = globals.CfgPass
-	}
-
-	if container.CfgEmail == "" {
-		container.CfgEmail = globals.CfgEmail
-	}
-
-	return container
-}
-
-// InstructionSetFromBuilderfileStruct turns a UnitConfig struct into an
-// InstructionSet struct - one of the intermediate steps to building, will
-// eventually be made private
-func (parser *Parser) InstructionSetFromBuilderfileStruct(file *unitconfig.UnitConfig) *InstructionSet {
-	ret := &InstructionSet{
-		DockerBuildOpts: file.Docker.BuildOpts,
-		DockerTagOpts:   file.Docker.TagOpts,
-		Containers:      []unitconfig.ContainerSection{},
-	}
-
-	if file.ContainerArr == nil {
-		file.ContainerArr = []*unitconfig.ContainerSection{}
-	}
-
-	if file.ContainerGlobals == nil {
-		file.ContainerGlobals = &unitconfig.ContainerSection{}
-	}
-	globals := file.ContainerGlobals
-
-	for _, container := range file.ContainerArr {
-		container = mergeGlobals(container, globals)
-		ret.Containers = append(ret.Containers, *container)
-	}
-
-	return ret
+	return u.String(), nil
 }

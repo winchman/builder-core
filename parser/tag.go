@@ -4,6 +4,8 @@ import (
 	"github.com/sylphon/build-runner/git"
 )
 
+// TODO: add template-based tagging, do away with the rest of this
+
 /*
 Tag is the interface for specifying tags for container builds.
 */
@@ -17,8 +19,6 @@ args to pass.
 */
 func NewTag(version string, args map[string]string) Tag {
 	switch version {
-	case "null":
-		return &nullTag{}
 	case "git":
 		return &gitTag{
 			tag: args["tag"],
@@ -31,10 +31,6 @@ func NewTag(version string, args map[string]string) Tag {
 	}
 }
 
-// used for empty tags for testing
-type nullTag struct {
-}
-
 // used for git-based tags
 type gitTag struct {
 	tag string
@@ -44,13 +40,6 @@ type gitTag struct {
 // used for "as-is" tags
 type stringTag struct {
 	tag string
-}
-
-/*
-Tag returns the fixed string "<TAG>" for a nullTag.
-*/
-func (tag *nullTag) Tag() string {
-	return "<TAG>"
 }
 
 /*
