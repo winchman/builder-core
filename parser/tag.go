@@ -1,7 +1,9 @@
 package parser
 
 import (
+	"bytes"
 	"github.com/rafecolton/go-gitutils"
+	"text/template"
 )
 
 // TODO: add template-based tagging, do away with the rest of this
@@ -21,17 +23,29 @@ func NewTag(value string) Tag {
 
 // Evaluate evaluates any git-based tags
 func (t Tag) Evaluate(top string) string {
-	var ret string
-
 	switch t.value {
 	case "git:branch":
-		ret = git.Branch(top)
+		return git.Branch(top)
 	case "git:rev", "git:sha":
-		ret = git.Sha(top)
+		return git.Sha(top)
 	case "git:short", "git:tag":
-		ret = git.Tag(top)
-	default:
-		ret = t.value
+		return git.Tag(top)
 	}
-	return ret
+	funcMap := template.FuncMap{
+		"branch": func() string { return git.Branch(top) },
+		"sha":    func() string { return git.Sha(top) },
+		"tag":    func() string { return git.Tag(top) },
+	}
+	templ, err := template.New("tagParser").Funcs(funcMap).Parse(t.value)
+	if err != nil {
+		return ""
+	}
+
+	var b bytes.Buffer
+	err = templ.Execute(&b, t.value)
+	if err != nil {
+		return ""
+	}
+
+	return b.String()
 }
