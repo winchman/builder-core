@@ -6,8 +6,6 @@ import (
 	"text/template"
 )
 
-// TODO: add template-based tagging, do away with the rest of this
-
 // Tag is for tagging
 type Tag struct {
 	value string
