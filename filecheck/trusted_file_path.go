@@ -4,15 +4,20 @@ import (
 	"path/filepath"
 )
 
+// TrustedFilePathState represents the state of a TrustedFilePath
 type TrustedFilePathState int
 
 const (
+	// Unchecked means the TrustedFilePath has not been checked for sanitization
 	Unchecked TrustedFilePathState = iota
 
+	// Errored means there was an error in creation
 	Errored
 
+	// OK means the path has been check and is sanitary
 	OK
 
+	// NotOK means the path has been check and is NOT sanitary
 	NotOK
 )
 
@@ -26,6 +31,8 @@ type TrustedFilePath struct {
 	Error error
 }
 
+// NewTrustedFilePathOptions are options for creating a new trusted file path -
+// used for disambiguating the args
 type NewTrustedFilePathOptions struct {
 	File string
 	Top  string

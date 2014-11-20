@@ -27,8 +27,8 @@ const (
 
 var dotDotRegex = regexp.MustCompile(`\.\.`)
 
-// SanitizeTrustedFilePath checks for disallowed entries in the provided
-// file path and returns either a sanitized version of the path or an error
+// Sanitize checks for disallowed entries in the provided file path and sets
+// the State and Error values of the trustedFilePath
 func (trustedFilePath *TrustedFilePath) Sanitize() {
 	var file = trustedFilePath.File()
 	var top = trustedFilePath.Top()
