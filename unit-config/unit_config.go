@@ -35,3 +35,10 @@ type ContainerSection struct {
 	CfgPass    string   `toml:"dockercfg_pass" json:"dockercfg_pass" yaml:"dockercfg_pass"`
 	CfgEmail   string   `toml:"dockercfg_email" json:"dockercfg_email" yaml:"dockercfg_email"`
 }
+
+func (config *UnitConfig) SkipPush(shouldSkip bool) {
+	if config.ContainerGlobals == nil {
+		config.ContainerGlobals = &ContainerSection{}
+	}
+	config.ContainerGlobals.SkipPush = shouldSkip
+}
