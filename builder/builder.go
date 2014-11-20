@@ -8,7 +8,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/fsouza/go-dockerclient"
 	"github.com/modcloth/go-fileutils"
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
@@ -39,20 +38,6 @@ type Builder struct {
 	Stdout          io.Writer
 	Builderfile     string
 	contextDir      string
-}
-
-type nullClient struct{}
-
-func (client *nullClient) Client() *docker.Client {
-	return nil
-}
-
-func (client *nullClient) LatestImageIDByName(name string) (string, error) {
-	return name, nil
-}
-
-func (client *nullClient) LatestImageIDByTag(tag string) (string, error) {
-	return tag, nil
 }
 
 /*
