@@ -77,12 +77,12 @@ func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
 		}
 	}
 
-	stdout := NewOutWriter(logger, "         %s")
-	stderr := NewOutWriter(logger, "         %s")
+	stdout := newOutWriter(logger, "         %s")
+	stderr := newOutWriter(logger, "         %s")
 
 	if logrus.IsTerminal() {
-		stdout = NewOutWriter(logger, "         @{g}%s@{|}")
-		stderr = NewOutWriter(logger, "         @{r}%s@{|}")
+		stdout = newOutWriter(logger, "         @{g}%s@{|}")
+		stderr = newOutWriter(logger, "         @{r}%s@{|}")
 	}
 
 	return &Builder{
