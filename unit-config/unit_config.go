@@ -36,15 +36,16 @@ type ContainerSection struct {
 	CfgEmail   string   `toml:"dockercfg_email" json:"dockercfg_email" yaml:"dockercfg_email"`
 }
 
-type UnitConfigGlobals struct {
+// ConfigGlobals are the global values that may be set with SetGlobals
+type ConfigGlobals struct {
 	SkipPush bool
 	CfgUn    string
 	CfgPass  string
 	CfgEmail string
 }
 
-// SkipPush sets whether or not pushes should be skipped for the given unit config
-func (config *UnitConfig) SetGlobals(globals UnitConfigGlobals) {
+// SetGlobals allows some global values to be set (i.e. if pulled from the env in the calling process)
+func (config *UnitConfig) SetGlobals(globals ConfigGlobals) {
 	if config.ContainerGlobals == nil {
 		config.ContainerGlobals = &ContainerSection{}
 	}
