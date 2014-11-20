@@ -158,7 +158,10 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 		bob.WithField("err", err).Warn("error getting repo taggged with temporary tag")
 	}
 
-	bob.WithField("tag", repoWithTag).Info("deleting temporary tag")
+	bob.WithFields(logrus.Fields{
+		"image_id": repoWithTag,
+		"tag":      uuid,
+	}).Info("deleting temporary tag")
 
 	if err = bob.dockerClient.Client().RemoveImage(repoWithTag); err != nil {
 		bob.WithField("err", err).Warn("error deleting temporary tag")
