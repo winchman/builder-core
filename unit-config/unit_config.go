@@ -36,6 +36,7 @@ type ContainerSection struct {
 	CfgEmail   string   `toml:"dockercfg_email" json:"dockercfg_email" yaml:"dockercfg_email"`
 }
 
+// SkipPush sets whether or not pushes should be skipped for the given unit config
 func (config *UnitConfig) SkipPush(shouldSkip bool) {
 	if config.ContainerGlobals == nil {
 		config.ContainerGlobals = &ContainerSection{}
