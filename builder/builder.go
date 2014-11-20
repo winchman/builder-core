@@ -184,8 +184,8 @@ func (bob *Builder) setup() Error {
 	meta := bob.nextSubSequence.Metadata
 	dockerfile := meta.Dockerfile
 	opts := filecheck.NewTrustedFilePathOptions{File: dockerfile, Top: bob.contextDir}
-	pathToDockerfile = filecheck.NewTrustedFilePath(opts)
-	if pathToDockerfile.State == filecheck.Errored {
+	pathToDockerfile, err = filecheck.NewTrustedFilePath(opts)
+	if err != nil {
 		return &buildRelatedError{
 			Message: err.Error(),
 			Code:    1,

@@ -43,7 +43,7 @@ type NewTrustedFilePathOptions struct {
 // sanitized by evaluating all symlinks so that it can be properly sanitized by
 // the builder when the time comes.  This treats "top" as trusted (i.e.
 // relative paths and symlinks can be evaluated safely).
-func NewTrustedFilePath(opts NewTrustedFilePathOptions) *TrustedFilePath {
+func NewTrustedFilePath(opts NewTrustedFilePathOptions) (*TrustedFilePath, error) {
 	top := opts.Top
 	file := opts.File
 	if top == "" {
@@ -54,7 +54,7 @@ func NewTrustedFilePath(opts NewTrustedFilePathOptions) *TrustedFilePath {
 		return &TrustedFilePath{
 			State: Errored,
 			Error: err,
-		}
+		}, err
 	}
 
 	resolved, err := filepath.EvalSymlinks(abs)
@@ -62,14 +62,14 @@ func NewTrustedFilePath(opts NewTrustedFilePathOptions) *TrustedFilePath {
 		return &TrustedFilePath{
 			State: Errored,
 			Error: err,
-		}
+		}, err
 	}
 
 	return &TrustedFilePath{
 		file:  file,
 		top:   resolved,
 		State: Unchecked,
-	}
+	}, nil
 }
 
 // File returns the file component of the trusted file path
