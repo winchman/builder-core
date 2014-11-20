@@ -12,6 +12,7 @@ import (
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
 
+	"github.com/sylphon/build-runner/filecheck"
 	"github.com/sylphon/build-runner/parser"
 )
 
@@ -77,12 +78,12 @@ func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
 		}
 	}
 
-	stdout := NewOutWriter(logger, "         %s")
-	stderr := NewOutWriter(logger, "         %s")
+	stdout := newOutWriter(logger, "         %s")
+	stderr := newOutWriter(logger, "         %s")
 
 	if logrus.IsTerminal() {
-		stdout = NewOutWriter(logger, "         @{g}%s@{|}")
-		stderr = NewOutWriter(logger, "         @{r}%s@{|}")
+		stdout = newOutWriter(logger, "         @{g}%s@{|}")
+		stderr = newOutWriter(logger, "         @{r}%s@{|}")
 	}
 
 	return &Builder{
@@ -170,9 +171,8 @@ order to perform the docker build.
 */
 func (bob *Builder) setup() Error {
 	var workdir = bob.workdir
-	var pathToDockerfile, sanitizedPathToDockerfile *TrustedFilePath
+	var pathToDockerfile *filecheck.TrustedFilePath
 	var err error
-	var bErr Error
 
 	if bob.nextSubSequence == nil {
 		return &buildRelatedError{
@@ -183,19 +183,23 @@ func (bob *Builder) setup() Error {
 
 	meta := bob.nextSubSequence.Metadata
 	dockerfile := meta.Dockerfile
-	pathToDockerfile, err = NewTrustedFilePath(dockerfile, bob.contextDir)
-	if err != nil {
+	opts := filecheck.NewTrustedFilePathOptions{File: dockerfile, Top: bob.contextDir}
+	pathToDockerfile = filecheck.NewTrustedFilePath(opts)
+	if pathToDockerfile.State == filecheck.Errored {
 		return &buildRelatedError{
 			Message: err.Error(),
 			Code:    1,
 		}
 	}
 
-	if sanitizedPathToDockerfile, bErr = SanitizeTrustedFilePath(pathToDockerfile); bErr != nil {
-		return bErr
+	if pathToDockerfile.Sanitize(); pathToDockerfile.State != filecheck.OK {
+		return &buildRelatedError{
+			Message: pathToDockerfile.Error.Error(),
+			Code:    1,
+		}
 	}
 
-	contextDir := sanitizedPathToDockerfile.Top()
+	contextDir := pathToDockerfile.Top()
 	tarStream, err := archive.TarWithOptions(contextDir, &archive.TarOptions{
 		Compression: archive.Uncompressed,
 		Excludes:    []string{"Dockerfile"},

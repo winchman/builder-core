@@ -1,6 +1,7 @@
-package builder
+package filecheck
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -26,52 +27,43 @@ const (
 
 var dotDotRegex = regexp.MustCompile(`\.\.`)
 
-// SanitizeTrustedFilePath checks for disallowed entries in the provided
-// file path and returns either a sanitized version of the path or an error
-func SanitizeTrustedFilePath(trustedFilePath *TrustedFilePath) (*TrustedFilePath, Error) {
+// Sanitize checks for disallowed entries in the provided file path and sets
+// the State and Error values of the trustedFilePath
+func (trustedFilePath *TrustedFilePath) Sanitize() {
 	var file = trustedFilePath.File()
 	var top = trustedFilePath.Top()
 
 	if dotDotRegex.MatchString(file) {
-		return nil, &sanitizeError{
-			Message:  dotDotSanitizeErrorMessage,
-			Filename: file,
-		}
+		trustedFilePath.State = NotOK
+		trustedFilePath.Error = errors.New(dotDotSanitizeErrorMessage)
+		return
 	}
 
 	abs, err := filepath.Abs(top + "/" + file)
 	if err != nil {
-		return nil, &sanitizeError{
-			Message:  invalidPathSanitizeErrorMessage,
-			error:    err,
-			Filename: file,
-		}
+		trustedFilePath.State = NotOK
+		trustedFilePath.Error = errors.New(invalidPathSanitizeErrorMessage)
+		return
 	}
 
 	resolved, err := filepath.EvalSymlinks(abs)
 	if err != nil {
-		msg := invalidPathSanitizeErrorMessage
+		trustedFilePath.State = NotOK
+		trustedFilePath.Error = errors.New(invalidPathSanitizeErrorMessage)
 		if os.IsNotExist(err) {
-			msg = doesNotExistSanitizeErrorMessage
+			trustedFilePath.Error = errors.New(doesNotExistSanitizeErrorMessage)
 		}
-		return nil, &sanitizeError{
-			Message:  msg,
-			error:    err,
-			Filename: file,
-		}
+		return
 	}
 
 	if abs != resolved {
-		return nil, &sanitizeError{
-			Message:  symlinkSanitizeErrorMessage,
-			Filename: file,
-		}
+		trustedFilePath.State = NotOK
+		trustedFilePath.Error = errors.New(symlinkSanitizeErrorMessage)
+		return
 	}
 
 	clean := filepath.Clean(abs)
-
-	return &TrustedFilePath{
-		top:  filepath.Dir(clean),
-		file: filepath.Base(clean),
-	}, nil
+	trustedFilePath.top = filepath.Dir(clean)
+	trustedFilePath.file = filepath.Base(clean)
+	trustedFilePath.State = OK
 }
