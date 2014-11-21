@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -133,7 +132,6 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 
 			switch opts.DockerClient.(type) {
 			case *nullClient:
-				fmt.Println(cmd.Message())
 				isNil = true
 				continue
 			default:
@@ -153,18 +151,28 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 }
 
 func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
-	repoWithTag, err := bob.dockerClient.LatestImageIDByTag(uuid)
+	regex := ":" + uuid + "$"
+	image, err := bob.dockerClient.LatestImageByRegex(regex)
 	if err != nil {
 		bob.WithField("err", err).Warn("error getting repo taggged with temporary tag")
 	}
 
-	bob.WithFields(logrus.Fields{
-		"image_id": repoWithTag,
-		"tag":      uuid,
-	}).Info("deleting temporary tag")
+	for _, tag := range image.RepoTags {
+		matched, err := regexp.MatchString(regex, tag)
+		if err != nil {
+			return
+		}
+		if matched {
+			bob.WithFields(logrus.Fields{
+				"image_id": image.ID,
+				"tag":      tag,
+			}).Info("deleting temporary tag")
 
-	if err = bob.dockerClient.Client().RemoveImage(repoWithTag); err != nil {
-		bob.WithField("err", err).Warn("error deleting temporary tag")
+			if err = bob.dockerClient.Client().RemoveImage(tag); err != nil {
+				bob.WithField("err", err).Warn("error deleting temporary tag")
+			}
+			return
+		}
 	}
 }
 

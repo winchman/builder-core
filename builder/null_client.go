@@ -15,3 +15,7 @@ func (client *nullClient) LatestImageIDByName(name string) (string, error) {
 func (client *nullClient) LatestImageIDByTag(tag string) (string, error) {
 	return tag, nil
 }
+
+func (client *nullClient) LatestImageByRegex(regex string) (*docker.APIImages, error) {
+	return nil, nil
+}
