@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sylphon/build-runner/builder"
-	"github.com/sylphon/build-runner/parser"
-	"github.com/sylphon/build-runner/unit-config"
+	"github.com/sylphon/builder-core/builder"
+	"github.com/sylphon/builder-core/parser"
+	"github.com/sylphon/builder-core/unit-config"
 )
 
 // Stream corresponds to a file stream (stdout/stderr)

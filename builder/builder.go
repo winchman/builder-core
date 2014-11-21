@@ -12,8 +12,8 @@ import (
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
 
-	"github.com/sylphon/build-runner/filecheck"
-	"github.com/sylphon/build-runner/parser"
+	"github.com/sylphon/builder-core/filecheck"
+	"github.com/sylphon/builder-core/parser"
 )
 
 var (

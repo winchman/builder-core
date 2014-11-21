@@ -32,10 +32,10 @@ RUN dpkg-divert --local --rename --add /sbin/initctl \
   && ln -sv /usr/local/go/bin/* /usr/local/bin \
   && rm -f $GO_TARBALL
 
-WORKDIR /app/src/github.com/sylphon/build-runner
+WORKDIR /app/src/github.com/sylphon/builder-core
 
 # set up build dir and add project
-ADD . /app/src/github.com/sylphon/build-runner
+ADD . /app/src/github.com/sylphon/builder-core
 
 # - make sure we don't have trouble getting deps from GitHub
 # - touch Makefile to avoid timestamp error message

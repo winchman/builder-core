@@ -2,7 +2,7 @@ package parser
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/sylphon/build-runner/unit-config"
+	"github.com/sylphon/builder-core/unit-config"
 )
 
 /*

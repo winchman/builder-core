@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/sylphon/build-runner/unit-config"
+	"github.com/sylphon/builder-core/unit-config"
 )
 
 var unitConfig = &unitconfig.UnitConfig{
@@ -16,7 +16,7 @@ var unitConfig = &unitconfig.UnitConfig{
 			Name:       "app",
 			Dockerfile: "Dockerfile",
 			Registry:   "quay.io/rafecolton",
-			Project:    "build-runner-test",
+			Project:    "builder-core-test",
 			Tags:       []string{"latest"},
 			SkipPush:   true,
 		},
@@ -33,7 +33,7 @@ var expectedCommandSequence = &CommandSequence{
 			SubCommand: []DockerCmd{
 				&BuildCmd{
 					buildOpts: docker.BuildImageOptions{
-						Name:           "quay.io/rafecolton/build-runner-test:9af73a34-ab4a-4d76-593b-fda4a5d1a988",
+						Name:           "quay.io/rafecolton/builder-core-test:9af73a34-ab4a-4d76-593b-fda4a5d1a988",
 						RmTmpContainer: true,
 						AuthConfigs: docker.AuthConfigurations{
 							Configs: map[string]docker.AuthConfiguration{
@@ -42,11 +42,11 @@ var expectedCommandSequence = &CommandSequence{
 								},
 							},
 						},
-						ContextDir: os.Getenv("GOPATH") + "/src/github.com/sylphon/build-runner/parser"},
+						ContextDir: os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/parser"},
 				},
 				&TagCmd{
 					Tag:  "latest",
-					Repo: "quay.io/rafecolton/build-runner-test",
+					Repo: "quay.io/rafecolton/builder-core-test",
 				},
 			},
 		},

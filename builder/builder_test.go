@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sylphon/build-runner/parser"
-	"github.com/sylphon/build-runner/unit-config"
+	"github.com/sylphon/builder-core/parser"
+	"github.com/sylphon/builder-core/unit-config"
 )
 
 var unitConfig = &unitconfig.UnitConfig{
@@ -16,7 +16,7 @@ var unitConfig = &unitconfig.UnitConfig{
 			Name:       "app",
 			Dockerfile: "Dockerfile",
 			Registry:   "quay.io/rafecolton",
-			Project:    "build-runner-test",
+			Project:    "builder-core-test",
 			Tags:       []string{"latest"},
 			SkipPush:   true,
 		},
@@ -33,7 +33,7 @@ func TestBuilder(t *testing.T) {
 
 	builderOpts := NewBuilderOptions{
 		Logger:       logger,
-		ContextDir:   os.Getenv("GOPATH") + "/src/github.com/sylphon/build-runner/_testing",
+		ContextDir:   os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing",
 		dockerClient: &nullClient{},
 	}
 

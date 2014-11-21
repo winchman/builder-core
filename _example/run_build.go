@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sylphon/build-runner"
-	"github.com/sylphon/build-runner/unit-config"
+	"github.com/sylphon/builder-core"
+	"github.com/sylphon/builder-core/unit-config"
 )
 
 var example = &unitconfig.UnitConfig{
@@ -15,7 +15,7 @@ var example = &unitconfig.UnitConfig{
 			Name:       "app",
 			Dockerfile: "Dockerfile",
 			Registry:   "quay.io/rafecolton",
-			Project:    "build-runner-test",
+			Project:    "builder-core-test",
 			Tags:       []string{"latest", "git:sha", "git:tag", "git:branch"},
 			SkipPush:   true,
 		},

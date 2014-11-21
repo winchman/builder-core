@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/sylphon/build-runner",
+	"ImportPath": "github.com/sylphon/builder-core",
 	"GoVersion": "go1.3.3",
 	"Deps": [
 		{
