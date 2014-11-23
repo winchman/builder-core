@@ -55,7 +55,7 @@ func (bob *Builder) SetNextSubSequence(subSeq *parser.SubSequence) {
 type NewBuilderOptions struct {
 	Logger       *logrus.Logger
 	ContextDir   string
-	dockerClient dockerclient.DockerClient
+	dockerClient dockerclient.DockerClient // default to nil for regular docker client
 }
 
 /*

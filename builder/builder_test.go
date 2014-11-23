@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/rafecolton/go-dockerclient-quick"
 	"github.com/sylphon/builder-core/parser"
 	"github.com/sylphon/builder-core/unit-config"
 )
@@ -23,7 +24,7 @@ var unitConfig = &unitconfig.UnitConfig{
 	},
 }
 
-func TestBuilder(t *testing.T) {
+func TestBuildCommandSequence(t *testing.T) {
 	var opts = parser.NewParserOptions{ContextDir: os.Getenv("PWD"), Logger: nil}
 	var p = parser.NewParser(opts)
 	commandSequence := p.Parse(unitConfig)
@@ -37,6 +38,18 @@ func TestBuilder(t *testing.T) {
 	}
 
 	if err := builder.BuildCommandSequence(commandSequence); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNewBuilder(t *testing.T) {
+	var ops = NewBuilderOptions{
+		ContextDir:   os.Getenv("PWD"),
+		Logger:       &logrus.Logger{},
+		dockerClient: dockerclient.FakeClient(),
+	}
+	_, err := NewBuilder(ops)
+	if err != nil {
 		t.Fatal(err)
 	}
 }
