@@ -53,6 +53,8 @@ func (b *BuildCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	return b
 }
 
+// NilClientError is the error returned by any Run() command if the underlying
+// docker client is nil
 type NilClientError struct{}
 
 func (err NilClientError) Error() string {
