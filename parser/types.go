@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sylphon/builder-core/communication"
 	"github.com/sylphon/builder-core/unit-config"
 )
 
@@ -11,14 +11,16 @@ as raw text and to convert toml to a Builderfile struct.  It also knows how to
 tell if the Builderfile is valid (openable) or nat.
 */
 type Parser struct {
-	*logrus.Logger
 	contextDir string
+	log        comm.LogChan
+	status     comm.StatusChan
 }
 
 // NewParserOptions encapsulates all of the options necessary when creating a new parser
 type NewParserOptions struct {
 	ContextDir string
-	Logger     *logrus.Logger
+	Log        comm.LogChan
+	Status     comm.StatusChan
 }
 
 /*
@@ -28,8 +30,9 @@ to change this.
 */
 func NewParser(opts NewParserOptions) *Parser {
 	return &Parser{
-		Logger:     opts.Logger,
 		contextDir: opts.ContextDir,
+		log:        opts.Log,
+		status:     opts.Status,
 	}
 }
 

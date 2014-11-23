@@ -6,12 +6,13 @@ import (
 	"io/ioutil"
 	"regexp"
 
-	"github.com/Sirupsen/logrus"
+	l "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/modcloth/go-fileutils"
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
 
+	"github.com/sylphon/builder-core/communication"
 	"github.com/sylphon/builder-core/filecheck"
 	"github.com/sylphon/builder-core/parser"
 )
@@ -30,13 +31,12 @@ A Builder is the struct that actually does the work of moving files around and
 executing the commands that do the docker build.
 */
 type Builder struct {
-	dockerClient dockerclient.DockerClient
-	*logrus.Logger
+	dockerClient    dockerclient.DockerClient
 	workdir         string
-	isRegular       bool
 	nextSubSequence *parser.SubSequence
-	Stderr          io.Writer
 	Stdout          io.Writer
+	log             comm.LogChan
+	status          comm.StatusChan
 	Builderfile     string
 	contextDir      string
 }
@@ -53,7 +53,8 @@ func (bob *Builder) SetNextSubSequence(subSeq *parser.SubSequence) {
 // NewBuilderOptions encapsulates all of the options necessary for creating a
 // new builder
 type NewBuilderOptions struct {
-	Logger       *logrus.Logger
+	Log          comm.LogChan
+	Status       comm.StatusChan
 	ContextDir   string
 	dockerClient dockerclient.DockerClient // default to nil for regular docker client
 }
@@ -63,10 +64,10 @@ NewBuilder returns an instance of a Builder struct.  The function exists in
 case we want to initialize our Builders with something.
 */
 func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
-	logger := opts.Logger
-	if logger == nil {
-		logger = logrus.New()
-		logger.Level = logrus.PanicLevel
+	var ret = &Builder{
+		log:        opts.Log,
+		status:     opts.Status,
+		contextDir: opts.ContextDir,
 	}
 
 	var client = opts.dockerClient
@@ -77,23 +78,13 @@ func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
 			return nil, err
 		}
 	}
+	ret.dockerClient = client
 
-	stdout := newOutWriter(logger, "         %s")
-	stderr := newOutWriter(logger, "         %s")
-
-	if logrus.IsTerminal() {
-		stdout = newOutWriter(logger, "         @{g}%s@{|}")
-		stderr = newOutWriter(logger, "         @{r}%s@{|}")
+	if opts.Log != nil {
+		ret.Stdout = comm.NewLogEntryWriter(opts.Log)
 	}
 
-	return &Builder{
-		dockerClient: client,
-		Logger:       logger,
-		isRegular:    true,
-		Stdout:       stdout,
-		Stderr:       stderr,
-		contextDir:   opts.ContextDir,
-	}, nil
+	return ret, nil
 }
 
 // BuildCommandSequence performs a build from a parser-generated CommandSequence struct
@@ -110,8 +101,10 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 			return err
 		}
 
-		bob.WithField("container_section", seq.Metadata.Name).
-			Info("running commands for container section")
+		bob.Log(
+			l.WithField("container_section", seq.Metadata.Name),
+			"running commands for container section",
+		)
 
 		for _, cmd := range seq.SubCommand {
 			opts := &parser.DockerCmdOpts{
@@ -119,13 +112,12 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 				Image:        imageID,
 				ImageUUID:    seq.Metadata.UUID,
 				SkipPush:     SkipPush,
-				Stderr:       bob.Stderr,
 				Stdout:       bob.Stdout,
 				Workdir:      bob.workdir,
 			}
 			cmd = cmd.WithOpts(opts)
 
-			bob.WithField("command", cmd.Message()).Info("running docker command")
+			bob.Log(l.WithField("command", cmd.Message()), "running docker command")
 
 			if imageID, err = cmd.Run(); err != nil {
 				switch err.(type) {
@@ -150,7 +142,11 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 	regex := ":" + uuid + "$"
 	image, err := bob.dockerClient.LatestImageByRegex(regex)
 	if err != nil {
-		bob.WithField("err", err).Warn("error getting repo taggged with temporary tag")
+		bob.LogLevel(
+			l.WithField("err", err),
+			"error getting repo taggged with temporary tag",
+			l.WarnLevel,
+		)
 	}
 
 	for _, tag := range image.RepoTags {
@@ -159,13 +155,20 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 			return
 		}
 		if matched {
-			bob.WithFields(logrus.Fields{
-				"image_id": image.ID,
-				"tag":      tag,
-			}).Info("deleting temporary tag")
+			bob.Log(
+				l.WithFields(l.Fields{
+					"image_id": image.ID,
+					"tag":      tag,
+				}),
+				"deleting temporary tag",
+			)
 
 			if err = bob.dockerClient.Client().RemoveImage(tag); err != nil {
-				bob.WithField("err", err).Warn("error deleting temporary tag")
+				bob.LogLevel(
+					l.WithField("err", err),
+					"error deleting temporary tag",
+					l.WarnLevel,
+				)
 			}
 			return
 		}
