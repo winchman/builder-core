@@ -31,15 +31,9 @@ func TestBuilder(t *testing.T) {
 	var logger = logrus.New()
 	logger.Level = logrus.DebugLevel
 
-	builderOpts := NewBuilderOptions{
-		Logger:       logger,
-		ContextDir:   os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing",
-		dockerClient: &nullClient{},
-	}
-
-	builder, err := NewBuilder(builderOpts)
-	if err != nil {
-		t.Fatal(err)
+	builder := &Builder{
+		Logger:     logger,
+		contextDir: os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing",
 	}
 
 	if err := builder.BuildCommandSequence(commandSequence); err != nil {

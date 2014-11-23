@@ -113,8 +113,6 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 		bob.WithField("container_section", seq.Metadata.Name).
 			Info("running commands for container section")
 
-		var isNil bool
-
 		for _, cmd := range seq.SubCommand {
 			opts := &parser.DockerCmdOpts{
 				DockerClient: bob.dockerClient,
@@ -129,25 +127,26 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 
 			bob.WithField("command", cmd.Message()).Info("running docker command")
 
-			switch opts.DockerClient.(type) {
-			case *nullClient:
-				isNil = true
-				continue
-			default:
-				if imageID, err = cmd.Run(); err != nil {
+			if imageID, err = cmd.Run(); err != nil {
+				switch err.(type) {
+				case parser.NilClientError:
+					continue
+				default:
 					return err
 				}
 			}
 		}
 
-		if !isNil {
-			bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
-		}
+		bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
 	}
 	return nil
 }
 
 func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
+	if bob.dockerClient == nil {
+		return
+	}
+
 	regex := ":" + uuid + "$"
 	image, err := bob.dockerClient.LatestImageByRegex(regex)
 	if err != nil {
