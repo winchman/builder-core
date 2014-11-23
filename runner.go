@@ -67,5 +67,4 @@ func RunBuildWait(unitConfig *unitconfig.UnitConfig, contextDir string) error {
 			return err
 		}
 	}
-	return <-done
 }
