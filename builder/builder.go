@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"errors"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -54,7 +55,7 @@ func (bob *Builder) SetNextSubSequence(subSeq *parser.SubSequence) {
 type NewBuilderOptions struct {
 	Logger       *logrus.Logger
 	ContextDir   string
-	dockerClient dockerclient.DockerClient
+	dockerClient dockerclient.DockerClient // default to nil for regular docker client
 }
 
 /*
@@ -96,15 +97,13 @@ func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
 }
 
 // BuildCommandSequence performs a build from a parser-generated CommandSequence struct
-func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence) Error {
+func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence) error {
 	for _, seq := range commandSequence.Commands {
 		var imageID string
 		var err error
 
 		if err := bob.cleanWorkdir(); err != nil {
-			return &buildRelatedError{
-				Message: err.Error(),
-			}
+			return err
 		}
 		bob.SetNextSubSequence(seq)
 		if err := bob.setup(); err != nil {
@@ -113,8 +112,6 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 
 		bob.WithField("container_section", seq.Metadata.Name).
 			Info("running commands for container section")
-
-		var isNil bool
 
 		for _, cmd := range seq.SubCommand {
 			opts := &parser.DockerCmdOpts{
@@ -130,27 +127,26 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 
 			bob.WithField("command", cmd.Message()).Info("running docker command")
 
-			switch opts.DockerClient.(type) {
-			case *nullClient:
-				isNil = true
-				continue
-			default:
-				if imageID, err = cmd.Run(); err != nil {
-					return &buildRelatedError{
-						Message: err.Error(),
-					}
+			if imageID, err = cmd.Run(); err != nil {
+				switch err.(type) {
+				case parser.NilClientError:
+					continue
+				default:
+					return err
 				}
 			}
 		}
 
-		if !isNil {
-			bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
-		}
+		bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
 	}
 	return nil
 }
 
 func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
+	if bob.dockerClient == nil {
+		return
+	}
+
 	regex := ":" + uuid + "$"
 	image, err := bob.dockerClient.LatestImageByRegex(regex)
 	if err != nil {
@@ -180,16 +176,13 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 Setup moves all of the correct files into place in the temporary directory in
 order to perform the docker build.
 */
-func (bob *Builder) setup() Error {
+func (bob *Builder) setup() error {
 	var workdir = bob.workdir
 	var pathToDockerfile *filecheck.TrustedFilePath
 	var err error
 
 	if bob.nextSubSequence == nil {
-		return &buildRelatedError{
-			Message: "no command sub sequence set, cannot perform setup",
-			Code:    1,
-		}
+		return errors.New("no command sub sequence set, cannot perform setup")
 	}
 
 	meta := bob.nextSubSequence.Metadata
@@ -197,17 +190,11 @@ func (bob *Builder) setup() Error {
 	opts := filecheck.NewTrustedFilePathOptions{File: dockerfile, Top: bob.contextDir}
 	pathToDockerfile, err = filecheck.NewTrustedFilePath(opts)
 	if err != nil {
-		return &buildRelatedError{
-			Message: err.Error(),
-			Code:    1,
-		}
+		return err
 	}
 
 	if pathToDockerfile.Sanitize(); pathToDockerfile.State != filecheck.OK {
-		return &buildRelatedError{
-			Message: pathToDockerfile.Error.Error(),
-			Code:    1,
-		}
+		return pathToDockerfile.Error
 	}
 
 	contextDir := pathToDockerfile.Top()
@@ -216,24 +203,20 @@ func (bob *Builder) setup() Error {
 		Excludes:    []string{"Dockerfile"},
 	})
 	if err != nil {
-		return &buildRelatedError{
-			Message: err.Error(),
-			Code:    1,
-		}
+		return err
 	}
 
 	defer tarStream.Close()
 	if err := archive.Untar(tarStream, workdir, nil); err != nil {
-		return &buildRelatedError{
-			Message: err.Error(),
-			Code:    1,
-		}
+		return err
 	}
-	if err := fileutils.CpWithArgs(contextDir+"/"+meta.Dockerfile, workdir+"/Dockerfile", fileutils.CpArgs{PreserveModTime: true}); err != nil {
-		return &buildRelatedError{
-			Message: err.Error(),
-			Code:    1,
-		}
+
+	if err := fileutils.CpWithArgs(
+		contextDir+"/"+meta.Dockerfile,
+		workdir+"/Dockerfile",
+		fileutils.CpArgs{PreserveModTime: true},
+	); err != nil {
+		return err
 	}
 
 	return nil

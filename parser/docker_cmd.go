@@ -53,10 +53,23 @@ func (b *BuildCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	return b
 }
 
+// NilClientError is the error returned by any Run() command if the underlying
+// docker client is nil
+type NilClientError struct{}
+
+func (err NilClientError) Error() string {
+	return "docker client is nil"
+}
+
 //Run is the command that actually calls docker build shell command.  Determine
 //the image ID for the resulting image and return that as well.
 func (b *BuildCmd) Run() (string, error) {
-	opts := b.opts
+	var opts = b.opts
+
+	if opts.DockerClient == nil {
+		return opts.ImageUUID, NilClientError{}
+	}
+
 	buildOpts := b.buildOpts
 	buildOpts.OutputStream = opts.Stdout
 	buildOpts.ContextDir = opts.Workdir
@@ -65,12 +78,12 @@ func (b *BuildCmd) Run() (string, error) {
 		return "", err
 	}
 
-	imageID, err := opts.DockerClient.LatestImageIDByTag(opts.ImageUUID)
+	image, err := opts.DockerClient.LatestImageByRegex(":" + opts.ImageUUID + "$")
 	if err != nil {
 		return "", err
 	}
 
-	return imageID, nil
+	return image.ID, nil
 }
 
 //Message returns the shell command that gets run for docker build commands
@@ -89,11 +102,16 @@ type TagCmd struct {
 	Tag     string
 	Repo    string
 	msg     string
+	test    bool
 }
 
 //WithOpts sets options required for the TagCmd
 func (t *TagCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	t.Image = opts.Image
+	if opts.DockerClient == nil {
+		t.test = true
+		return t
+	}
 	t.TagFunc = opts.DockerClient.Client().TagImage
 	return t
 }
@@ -104,6 +122,9 @@ func (t *TagCmd) Run() (string, error) {
 		Force: t.Force,
 		Repo:  t.Repo,
 		Tag:   t.Tag,
+	}
+	if t.test {
+		return t.Image, NilClientError{}
 	}
 	return t.Image, t.TagFunc(t.Image, *opts)
 }
@@ -136,10 +157,14 @@ type PushCmd struct {
 
 	skip    bool
 	imageID string
+	test    bool
 }
 
 //WithOpts sets options required for the PushCmd
 func (p *PushCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
+	if opts.DockerClient == nil {
+		p.test = true
+	}
 	p.OutputStream = opts.Stdout
 	p.PushFunc = opts.DockerClient.Client().PushImage
 	p.skip = opts.SkipPush
@@ -149,7 +174,7 @@ func (p *PushCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 
 //Run is the command that actually calls PushImage to do the pushing
 func (p *PushCmd) Run() (string, error) {
-	if p.skip {
+	if p.skip || p.test {
 		return p.imageID, nil
 	}
 
