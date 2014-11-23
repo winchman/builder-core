@@ -1,6 +1,7 @@
 package comm
 
 import (
+	"io"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -52,18 +53,22 @@ type StatusEntry interface {
 	//Error() error // should be checked for non-nil
 }
 
-// NewLogEntryWriter returns a log entry writer initialized with the provided
-// channel. The provided writer implements the io.Writer interface
-func NewLogEntryWriter(ch LogChan) *LogEntryWriter {
-	return &LogEntryWriter{log: ch}
+// LogEntryWriter is a type for implementing the io.Writer interface
+type LogEntryWriter interface {
+	io.Writer
 }
 
-// LogEntryWriter is a type for implementing the io.Writer interface
-type LogEntryWriter struct {
+// NewLogEntryWriter returns a log entry writer initialized with the provided
+// channel. The provided writer implements the io.Writer interface
+func NewLogEntryWriter(ch LogChan) LogEntryWriter {
+	return logEntryWriter{log: ch}
+}
+
+type logEntryWriter struct {
 	log LogChan
 }
 
-func (writer *LogEntryWriter) Write(p []byte) (n int, err error) {
+func (writer logEntryWriter) Write(p []byte) (n int, err error) {
 	lines := strings.Split(string(p), "\n")
 	for _, line := range lines {
 		writer.log <- (*logEntry)(&logrus.Entry{Message: string(line)})
