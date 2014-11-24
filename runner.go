@@ -53,17 +53,23 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 	return log, status, exit
 }
 
-// RunBuildWait - run a build, wait for it to finish, log to stdout
-func RunBuildWait(unitConfig *unitconfig.UnitConfig, contextDir string) error {
+// RunBuildSynchronously - run a build, wait for it to finish, log to stdout
+func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string) error {
 	var logger = logrus.New()
 	logger.Level = logrus.DebugLevel
 	log, _, done := RunBuild(unitConfig, contextDir)
 	for {
 		select {
-		case e := <-log:
+		case e, ok := <-log:
+			if !ok {
+				return errors.New("log channel closed prematurely")
+			}
 			e.Entry().Logger = logger
 			e.Entry().Debugln(e.Entry().Message)
-		case err := <-done:
+		case err, ok := <-done:
+			if !ok {
+				return errors.New("exit channel closed prematurely")
+			}
 			return err
 		}
 	}
