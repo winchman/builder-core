@@ -34,7 +34,6 @@ func (r *Reporter) LogLevel(entry *logrus.Entry, message string, level logrus.Le
 type EventOptions struct {
 	EventType EventType
 	Note      string
-	Error     error
 }
 
 // Event notifies the Reporter's EventChan that an event has occurred
@@ -43,7 +42,6 @@ func (r *Reporter) Event(opts EventOptions) {
 		r.event <- &event{
 			eventType: opts.EventType,
 			note:      opts.Note,
-			err:       opts.Error,
 		}
 	}
 }

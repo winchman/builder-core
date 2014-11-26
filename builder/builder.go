@@ -79,7 +79,7 @@ func NewBuilder(opts NewBuilderOptions) *Builder {
 
 // BuildCommandSequence performs a build from a parser-generated CommandSequence struct
 func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence) error {
-	//bob.Report(comm.RequestedEvent)
+	bob.reporter.Event(comm.EventOptions{EventType: comm.RequestedEvent})
 
 	if bob.dockerClient == nil {
 		client, err := dockerclient.NewDockerClient()

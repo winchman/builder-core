@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
 	b "github.com/sylphon/builder-core/builder"
@@ -54,7 +55,7 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string) error {
 	var logger = logrus.New()
 	logger.Level = logrus.DebugLevel
-	log, _, done := RunBuild(unitConfig, contextDir)
+	log, status, done := RunBuild(unitConfig, contextDir)
 	for {
 		select {
 		case e, ok := <-log:
@@ -63,6 +64,15 @@ func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string)
 			}
 			e.Entry().Logger = logger
 			e.Entry().Debugln(e.Entry().Message)
+		case event, ok := <-status:
+			if !ok {
+				return errors.New("status channel closed prematurely")
+			}
+			msg := fmt.Sprintf("status event (type %s)", event.EventType())
+			if event.Note() != "" {
+				msg = msg + ": " + event.Note()
+			}
+			logger.Infoln(msg)
 		case err, ok := <-done:
 			if !ok {
 				return errors.New("exit channel closed prematurely")
