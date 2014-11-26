@@ -35,8 +35,7 @@ type Builder struct {
 	workdir         string
 	nextSubSequence *parser.SubSequence
 	Stdout          io.Writer
-	log             comm.LogChan
-	status          comm.StatusChan
+	reporter        *comm.Reporter
 	Builderfile     string
 	contextDir      string
 }
@@ -54,7 +53,7 @@ func (bob *Builder) SetNextSubSequence(subSeq *parser.SubSequence) {
 // new builder
 type NewBuilderOptions struct {
 	Log          comm.LogChan
-	Status       comm.StatusChan
+	Event        comm.EventChan
 	ContextDir   string
 	dockerClient dockerclient.DockerClient // default to nil for regular docker client
 }
@@ -65,8 +64,7 @@ case we want to initialize our Builders with something.
 */
 func NewBuilder(opts NewBuilderOptions) *Builder {
 	var ret = &Builder{
-		log:        opts.Log,
-		status:     opts.Status,
+		reporter:   comm.NewReporter(opts.Log, opts.Event),
 		contextDir: opts.ContextDir,
 	}
 
@@ -81,12 +79,14 @@ func NewBuilder(opts NewBuilderOptions) *Builder {
 
 // BuildCommandSequence performs a build from a parser-generated CommandSequence struct
 func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence) error {
-	if bob.client == nil {
-		var err error
-		client, err = dockerclient.NewDockerClient()
+	//bob.Report(comm.RequestedEvent)
+
+	if bob.dockerClient == nil {
+		client, err := dockerclient.NewDockerClient()
 		if err != nil {
 			return err
 		}
+		bob.dockerClient = client
 	}
 
 	for _, seq := range commandSequence.Commands {
@@ -101,7 +101,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 			return err
 		}
 
-		bob.Log(
+		bob.reporter.Log(
 			l.WithField("container_section", seq.Metadata.Name),
 			"running commands for container section",
 		)
@@ -117,7 +117,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 			}
 			cmd = cmd.WithOpts(opts)
 
-			bob.Log(l.WithField("command", cmd.Message()), "running docker command")
+			bob.reporter.Log(l.WithField("command", cmd.Message()), "running docker command")
 
 			if imageID, err = cmd.Run(); err != nil {
 				switch err.(type) {
@@ -142,7 +142,7 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 	regex := ":" + uuid + "$"
 	image, err := bob.dockerClient.LatestImageByRegex(regex)
 	if err != nil {
-		bob.LogLevel(
+		bob.reporter.LogLevel(
 			l.WithField("err", err),
 			"error getting repo taggged with temporary tag",
 			l.WarnLevel,
@@ -155,7 +155,7 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 			return
 		}
 		if matched {
-			bob.Log(
+			bob.reporter.Log(
 				l.WithFields(l.Fields{
 					"image_id": image.ID,
 					"tag":      tag,
@@ -164,7 +164,7 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 			)
 
 			if err = bob.dockerClient.Client().RemoveImage(tag); err != nil {
-				bob.LogLevel(
+				bob.reporter.LogLevel(
 					l.WithField("err", err),
 					"error deleting temporary tag",
 					l.WarnLevel,

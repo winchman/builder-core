@@ -13,9 +13,9 @@ import (
 // RunBuild runs a complete build for the provided unit config.  Currently, the
 // channels argument is ignored but will be used in the future along with the
 // LogMsg and StatusMsg interfaces
-func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogChan, comm.StatusChan, comm.ExitChan) {
+func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogChan, comm.EventChan, comm.ExitChan) {
 	var log = make(chan comm.LogEntry, 1)
-	var status = make(chan comm.StatusEntry, 1)
+	var event = make(chan comm.Event, 1)
 	var exit = make(chan error)
 
 	go func() {
@@ -28,19 +28,16 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 
 		parser := p.NewParser(p.NewParserOptions{
 			ContextDir: contextDir,
-			//Logger:     logger,
+			Log:        log,
+			Event:      event,
 		})
 		commandSequence := parser.Parse(unitConfig)
 
-		builder, err := b.NewBuilder(b.NewBuilderOptions{
+		builder := b.NewBuilder(b.NewBuilderOptions{
 			ContextDir: contextDir,
 			Log:        log,
-			Status:     status,
+			Event:      event,
 		})
-		if err != nil {
-			exit <- err
-			return
-		}
 
 		if err = builder.BuildCommandSequence(commandSequence); err != nil {
 			exit <- err
@@ -50,7 +47,7 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 		exit <- nil
 	}()
 
-	return log, status, exit
+	return log, event, exit
 }
 
 // RunBuildSynchronously - run a build, wait for it to finish, log to stdout
