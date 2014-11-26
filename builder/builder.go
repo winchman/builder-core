@@ -63,32 +63,32 @@ type NewBuilderOptions struct {
 NewBuilder returns an instance of a Builder struct.  The function exists in
 case we want to initialize our Builders with something.
 */
-func NewBuilder(opts NewBuilderOptions) (*Builder, error) {
+func NewBuilder(opts NewBuilderOptions) *Builder {
 	var ret = &Builder{
 		log:        opts.Log,
 		status:     opts.Status,
 		contextDir: opts.ContextDir,
 	}
 
-	var client = opts.dockerClient
-	if client == nil {
-		var err error
-		client, err = dockerclient.NewDockerClient()
-		if err != nil {
-			return nil, err
-		}
-	}
-	ret.dockerClient = client
+	ret.dockerClient = opts.dockerClient
 
 	if opts.Log != nil {
 		ret.Stdout = comm.NewLogEntryWriter(opts.Log)
 	}
 
-	return ret, nil
+	return ret
 }
 
 // BuildCommandSequence performs a build from a parser-generated CommandSequence struct
 func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence) error {
+	if bob.client == nil {
+		var err error
+		client, err = dockerclient.NewDockerClient()
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, seq := range commandSequence.Commands {
 		var imageID string
 		var err error
