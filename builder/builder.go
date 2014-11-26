@@ -72,6 +72,8 @@ func NewBuilder(opts NewBuilderOptions) *Builder {
 
 	if opts.Log != nil {
 		ret.Stdout = comm.NewLogEntryWriter(opts.Log)
+	} else {
+		ret.Stdout = ioutil.Discard /* /dev/null */
 	}
 
 	return ret

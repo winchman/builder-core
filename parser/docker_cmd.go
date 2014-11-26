@@ -48,12 +48,16 @@ type BuildCmd struct {
 	buildOpts     docker.BuildImageOptions
 	origBuildOpts []string
 	reporter      *comm.Reporter
+	test          bool
 }
 
 //WithOpts sets options required for the BuildCmd
 func (b *BuildCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	b.opts = opts
 	b.reporter = opts.Reporter
+	if opts.DockerClient.Client().HTTPClient == nil {
+		b.test = true
+	}
 	return b
 }
 
@@ -68,12 +72,12 @@ func (err NilClientError) Error() string {
 //Run is the command that actually calls docker build shell command.  Determine
 //the image ID for the resulting image and return that as well.
 func (b *BuildCmd) Run() (string, error) {
-	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEvent})
-
 	var opts = b.opts
-	if opts.DockerClient == nil {
+	if b.test {
 		return opts.ImageUUID, NilClientError{}
 	}
+
+	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEvent})
 
 	buildOpts := b.buildOpts
 	buildOpts.OutputStream = opts.Stdout
@@ -137,7 +141,7 @@ type TagCmd struct {
 func (t *TagCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	t.Image = opts.Image
 	t.reporter = opts.Reporter
-	if opts.DockerClient == nil {
+	if opts.DockerClient.Client().HTTPClient == nil {
 		t.test = true
 		return t
 	}
@@ -211,8 +215,9 @@ type PushCmd struct {
 
 //WithOpts sets options required for the PushCmd
 func (p *PushCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
-	if opts.DockerClient == nil {
+	if opts.DockerClient.Client().HTTPClient == nil {
 		p.test = true
+		return p
 	}
 	p.OutputStream = opts.Stdout
 	p.PushFunc = opts.DockerClient.Client().PushImage

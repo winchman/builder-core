@@ -28,22 +28,12 @@ func TestBuildCommandSequence(t *testing.T) {
 	var p = parser.NewParser(opts)
 	commandSequence := p.Parse(unitConfig)
 
-	builder := &Builder{
-		contextDir: os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing",
-	}
+	builder := NewBuilder(NewBuilderOptions{
+		ContextDir:   os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing",
+		dockerClient: dockerclient.FakeClient(),
+	})
 
 	if err := builder.BuildCommandSequence(commandSequence); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestNewBuilder(t *testing.T) {
-	var ops = NewBuilderOptions{
-		ContextDir:   os.Getenv("PWD"),
-		dockerClient: dockerclient.FakeClient(),
-	}
-	_, err := NewBuilder(ops)
-	if err != nil {
 		t.Fatal(err)
 	}
 }
