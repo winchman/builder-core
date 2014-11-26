@@ -4,11 +4,13 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
+// Reporter is type for sending messages on log and/or status channels
 type Reporter struct {
 	log   LogChan
 	event EventChan
 }
 
+// NewReporter returns a reporter that is initialized with the provided channels
 func NewReporter(log LogChan, event EventChan) *Reporter {
 	return &Reporter{
 		log:   log,
@@ -33,7 +35,7 @@ func (r *Reporter) LogLevel(entry *logrus.Entry, message string, level logrus.Le
 // EventOptions are the options when telling a Reporter to trigger an event
 type EventOptions struct {
 	EventType EventType
-	Note      string
+	Data      map[string]interface{}
 }
 
 // Event notifies the Reporter's EventChan that an event has occurred
@@ -41,7 +43,7 @@ func (r *Reporter) Event(opts EventOptions) {
 	if r.event != nil {
 		r.event <- &event{
 			eventType: opts.EventType,
-			note:      opts.Note,
+			data:      opts.Data,
 		}
 	}
 }

@@ -114,6 +114,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 				SkipPush:     SkipPush,
 				Stdout:       bob.Stdout,
 				Workdir:      bob.workdir,
+				Reporter:     bob.reporter,
 			}
 			cmd = cmd.WithOpts(opts)
 
@@ -131,6 +132,9 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 
 		bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
 	}
+
+	bob.reporter.Event(comm.EventOptions{EventType: comm.CompletedEvent})
+
 	return nil
 }
 

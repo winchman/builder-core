@@ -2,7 +2,6 @@ package runner
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Sirupsen/logrus"
 	b "github.com/sylphon/builder-core/builder"
@@ -68,11 +67,7 @@ func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string)
 			if !ok {
 				return errors.New("status channel closed prematurely")
 			}
-			msg := fmt.Sprintf("status event (type %s)", event.EventType())
-			if event.Note() != "" {
-				msg = msg + ": " + event.Note()
-			}
-			logger.Infoln(msg)
+			logger.WithFields(event.Data()).Warnf("status event (type %s)", event.EventType())
 		case err, ok := <-done:
 			if !ok {
 				return errors.New("exit channel closed prematurely")
