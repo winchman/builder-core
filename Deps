@@ -9,8 +9,8 @@
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.5.1-18-g89b6d46",
-			"Rev": "89b6d460f0048bd1591d723b483f89b127257dbb"
+			"Comment": "v0.6.1-1-gf9e0c0d",
+			"Rev": "f9e0c0dd4aec8f179cb6dc4f2aea811f36b58f54"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/archive",
@@ -66,7 +66,7 @@
 		},
 		{
 			"ImportPath": "github.com/rafecolton/go-dockerclient-quick",
-			"Rev": "c26148ec0057fc5c6ea18bcdbe23043a6e81bc58"
+			"Rev": "713f8731d921ca4009b67d83de5350d8b38c66e1"
 		},
 		{
 			"ImportPath": "github.com/rafecolton/go-dockerclient-sort",
@@ -75,10 +75,6 @@
 		{
 			"ImportPath": "github.com/rafecolton/go-gitutils",
 			"Rev": "50d1ab234ffa3df05162c8eae4dddef1d907faa8"
-		},
-		{
-			"ImportPath": "github.com/wsxiaoys/terminal/color",
-			"Rev": "9dcaf1d63119a8ac00eef82270eaef08b6aa2328"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

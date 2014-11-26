@@ -55,7 +55,7 @@ var expectedCommandSequence = &CommandSequence{
 
 func TestParse(t *testing.T) {
 
-	var opts = NewParserOptions{ContextDir: os.Getenv("PWD"), Logger: nil}
+	var opts = NewParserOptions{ContextDir: os.Getenv("PWD")}
 	var p = NewParser(opts)
 	commandSequence := p.Parse(unitConfig)
 
