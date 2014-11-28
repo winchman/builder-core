@@ -20,12 +20,12 @@ func NewReporter(log LogChan, event EventChan) *Reporter {
 
 // Log - send a log message into the ether
 func (r *Reporter) Log(entry *logrus.Entry, message string) {
-	entry.Message = message
 	r.LogLevel(entry, message, logrus.DebugLevel)
 }
 
 // LogLevel - send a log message into the ether, specifying level
 func (r *Reporter) LogLevel(entry *logrus.Entry, message string, level logrus.Level) {
+	entry.Message = message
 	entry.Level = level
 	if r.log != nil {
 		r.log <- NewLogEntry(entry)
