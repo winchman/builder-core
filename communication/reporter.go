@@ -21,15 +21,15 @@ func NewReporter(log LogChan, event EventChan) *Reporter {
 // Log - send a log message into the ether
 func (r *Reporter) Log(entry *logrus.Entry, message string) {
 	entry.Message = message
-	if r.log != nil {
-		r.log <- NewLogEntry(entry)
-	}
+	r.LogLevel(entry, message, logrus.DebugLevel)
 }
 
 // LogLevel - send a log message into the ether, specifying level
 func (r *Reporter) LogLevel(entry *logrus.Entry, message string, level logrus.Level) {
 	entry.Level = level
-	r.Log(entry, message)
+	if r.log != nil {
+		r.log <- NewLogEntry(entry)
+	}
 }
 
 // EventOptions are the options when telling a Reporter to trigger an event

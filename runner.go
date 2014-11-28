@@ -62,7 +62,20 @@ func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string)
 				return errors.New("log channel closed prematurely")
 			}
 			e.Entry().Logger = logger
-			e.Entry().Debugln(e.Entry().Message)
+			switch e.Entry().Level {
+			case logrus.PanicLevel:
+				e.Entry().Panicln(e.Entry().Message)
+			case logrus.FatalLevel:
+				e.Entry().Fatalln(e.Entry().Message)
+			case logrus.ErrorLevel:
+				e.Entry().Errorln(e.Entry().Message)
+			case logrus.WarnLevel:
+				e.Entry().Warnln(e.Entry().Message)
+			case logrus.InfoLevel:
+				e.Entry().Infoln(e.Entry().Message)
+			default:
+				e.Entry().Debugln(e.Entry().Message)
+			}
 		case event, ok := <-status:
 			if !ok {
 				return errors.New("status channel closed prematurely")
