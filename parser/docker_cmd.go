@@ -6,6 +6,7 @@ import (
 
 	"github.com/fsouza/go-dockerclient"
 	"github.com/rafecolton/go-dockerclient-quick"
+	"github.com/sylphon/builder-core/communication"
 )
 
 /*
@@ -20,6 +21,7 @@ type DockerCmdOpts struct {
 	Stderr       io.Writer
 	SkipPush     bool
 	ImageUUID    string
+	Reporter     *comm.Reporter
 }
 
 /*
@@ -45,11 +47,17 @@ type BuildCmd struct {
 	opts          *DockerCmdOpts
 	buildOpts     docker.BuildImageOptions
 	origBuildOpts []string
+	reporter      *comm.Reporter
+	test          bool
 }
 
 //WithOpts sets options required for the BuildCmd
 func (b *BuildCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	b.opts = opts
+	b.reporter = opts.Reporter
+	if opts.DockerClient.Client().HTTPClient == nil {
+		b.test = true
+	}
 	return b
 }
 
@@ -65,24 +73,47 @@ func (err NilClientError) Error() string {
 //the image ID for the resulting image and return that as well.
 func (b *BuildCmd) Run() (string, error) {
 	var opts = b.opts
-
-	if opts.DockerClient == nil {
+	if b.test {
 		return opts.ImageUUID, NilClientError{}
 	}
+
+	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEvent})
 
 	buildOpts := b.buildOpts
 	buildOpts.OutputStream = opts.Stdout
 	buildOpts.ContextDir = opts.Workdir
 
 	if err := opts.DockerClient.Client().BuildImage(buildOpts); err != nil {
+		b.reporter.Event(comm.EventOptions{
+			EventType: comm.BuildCompletedEvent,
+			Data: map[string]interface{}{
+				"uuid_tag": opts.ImageUUID,
+				"error":    err,
+			},
+		})
 		return "", err
 	}
 
 	image, err := opts.DockerClient.LatestImageByRegex(":" + opts.ImageUUID + "$")
 	if err != nil {
+		b.reporter.Event(comm.EventOptions{
+			EventType: comm.BuildCompletedEvent,
+			Data: map[string]interface{}{
+				"uuid_tag": opts.ImageUUID,
+				"error":    err,
+			},
+		})
 		return "", err
 	}
 
+	b.reporter.Event(comm.EventOptions{
+		EventType: comm.BuildCompletedEvent,
+		Data: map[string]interface{}{
+			"image_id": image.ID,
+			"uuid_tag": opts.ImageUUID,
+			"error":    nil,
+		},
+	})
 	return image.ID, nil
 }
 
@@ -96,19 +127,21 @@ func (b *BuildCmd) Message() string {
 
 //TagCmd is a wrapper for the docker TagImage functionality
 type TagCmd struct {
-	TagFunc func(name string, opts docker.TagImageOptions) error
-	Image   string
-	Force   bool
-	Tag     string
-	Repo    string
-	msg     string
-	test    bool
+	TagFunc  func(name string, opts docker.TagImageOptions) error
+	Image    string
+	Force    bool
+	Tag      string
+	Repo     string
+	msg      string
+	test     bool
+	reporter *comm.Reporter
 }
 
 //WithOpts sets options required for the TagCmd
 func (t *TagCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 	t.Image = opts.Image
-	if opts.DockerClient == nil {
+	t.reporter = opts.Reporter
+	if opts.DockerClient.Client().HTTPClient == nil {
 		t.test = true
 		return t
 	}
@@ -118,6 +151,14 @@ func (t *TagCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
 
 //Run is the command that actually calls TagImage to do the tagging
 func (t *TagCmd) Run() (string, error) {
+	t.reporter.Event(comm.EventOptions{
+		EventType: comm.TagEvent,
+		Data: map[string]interface{}{
+			"image_id": t.Image,
+			"repo":     t.Repo,
+			"tag":      t.Tag,
+		},
+	})
 	var opts = &docker.TagImageOptions{
 		Force: t.Force,
 		Repo:  t.Repo,
@@ -126,7 +167,18 @@ func (t *TagCmd) Run() (string, error) {
 	if t.test {
 		return t.Image, NilClientError{}
 	}
-	return t.Image, t.TagFunc(t.Image, *opts)
+	err := t.TagFunc(t.Image, *opts)
+	t.reporter.Event(comm.EventOptions{
+		EventType: comm.TagCompletedEvent,
+		Data: map[string]interface{}{
+			"image_id": t.Image,
+			"repo":     t.Repo,
+			"tag":      t.Tag,
+			"error":    err,
+		},
+	})
+
+	return t.Image, err
 }
 
 //Message returns the shell command that would be equivalent to the TagImage command
@@ -155,20 +207,23 @@ type PushCmd struct {
 	AuthEmail    string
 	OutputStream io.Writer
 
-	skip    bool
-	imageID string
-	test    bool
+	skip     bool
+	imageID  string
+	test     bool
+	reporter *comm.Reporter
 }
 
 //WithOpts sets options required for the PushCmd
 func (p *PushCmd) WithOpts(opts *DockerCmdOpts) DockerCmd {
-	if opts.DockerClient == nil {
+	if opts.DockerClient.Client().HTTPClient == nil {
 		p.test = true
+		return p
 	}
 	p.OutputStream = opts.Stdout
 	p.PushFunc = opts.DockerClient.Client().PushImage
 	p.skip = opts.SkipPush
 	p.imageID = opts.Image
+	p.reporter = opts.Reporter
 	return p
 }
 
@@ -177,6 +232,15 @@ func (p *PushCmd) Run() (string, error) {
 	if p.skip || p.test {
 		return p.imageID, nil
 	}
+
+	p.reporter.Event(comm.EventOptions{
+		EventType: comm.PushEvent,
+		Data: map[string]interface{}{
+			"repo":     p.Image,
+			"tag":      p.Tag,
+			"registry": p.Registry,
+		},
+	})
 
 	auth := &docker.AuthConfiguration{
 		Username: p.AuthUn,
@@ -189,7 +253,19 @@ func (p *PushCmd) Run() (string, error) {
 		Registry:     p.Registry,
 		OutputStream: p.OutputStream,
 	}
-	return p.imageID, p.PushFunc(*opts, *auth)
+
+	err := p.PushFunc(*opts, *auth)
+	p.reporter.Event(comm.EventOptions{
+		EventType: comm.PushEvent,
+		Data: map[string]interface{}{
+			"repo":     p.Image,
+			"tag":      p.Tag,
+			"registry": p.Registry,
+			"error":    err,
+		},
+	})
+
+	return p.imageID, err
 }
 
 //Message returns the shell command that would be equivalent to the PushImage command

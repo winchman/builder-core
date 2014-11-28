@@ -13,9 +13,9 @@ import (
 // RunBuild runs a complete build for the provided unit config.  Currently, the
 // channels argument is ignored but will be used in the future along with the
 // LogMsg and StatusMsg interfaces
-func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogChan, comm.StatusChan, comm.ExitChan) {
+func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogChan, comm.EventChan, comm.ExitChan) {
 	var log = make(chan comm.LogEntry, 1)
-	var status = make(chan comm.StatusEntry, 1)
+	var event = make(chan comm.Event, 1)
 	var exit = make(chan error)
 
 	go func() {
@@ -28,19 +28,16 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 
 		parser := p.NewParser(p.NewParserOptions{
 			ContextDir: contextDir,
-			//Logger:     logger,
+			Log:        log,
+			Event:      event,
 		})
 		commandSequence := parser.Parse(unitConfig)
 
-		builder, err := b.NewBuilder(b.NewBuilderOptions{
+		builder := b.NewBuilder(b.NewBuilderOptions{
 			ContextDir: contextDir,
 			Log:        log,
-			Status:     status,
+			Event:      event,
 		})
-		if err != nil {
-			exit <- err
-			return
-		}
 
 		if err = builder.BuildCommandSequence(commandSequence); err != nil {
 			exit <- err
@@ -50,14 +47,14 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 		exit <- nil
 	}()
 
-	return log, status, exit
+	return log, event, exit
 }
 
 // RunBuildSynchronously - run a build, wait for it to finish, log to stdout
 func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string) error {
 	var logger = logrus.New()
 	logger.Level = logrus.DebugLevel
-	log, _, done := RunBuild(unitConfig, contextDir)
+	log, status, done := RunBuild(unitConfig, contextDir)
 	for {
 		select {
 		case e, ok := <-log:
@@ -65,7 +62,25 @@ func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string)
 				return errors.New("log channel closed prematurely")
 			}
 			e.Entry().Logger = logger
-			e.Entry().Debugln(e.Entry().Message)
+			switch e.Entry().Level {
+			case logrus.PanicLevel:
+				e.Entry().Panicln(e.Entry().Message)
+			case logrus.FatalLevel:
+				e.Entry().Fatalln(e.Entry().Message)
+			case logrus.ErrorLevel:
+				e.Entry().Errorln(e.Entry().Message)
+			case logrus.WarnLevel:
+				e.Entry().Warnln(e.Entry().Message)
+			case logrus.InfoLevel:
+				e.Entry().Infoln(e.Entry().Message)
+			default:
+				e.Entry().Debugln(e.Entry().Message)
+			}
+		case event, ok := <-status:
+			if !ok {
+				return errors.New("status channel closed prematurely")
+			}
+			logger.WithFields(event.Data()).Warnf("status event (type %s)", event.EventType())
 		case err, ok := <-done:
 			if !ok {
 				return errors.New("exit channel closed prematurely")

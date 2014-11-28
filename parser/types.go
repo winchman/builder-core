@@ -12,15 +12,14 @@ tell if the Builderfile is valid (openable) or nat.
 */
 type Parser struct {
 	contextDir string
-	log        comm.LogChan
-	status     comm.StatusChan
+	reporter   *comm.Reporter
 }
 
 // NewParserOptions encapsulates all of the options necessary when creating a new parser
 type NewParserOptions struct {
 	ContextDir string
 	Log        comm.LogChan
-	Status     comm.StatusChan
+	Event      comm.EventChan
 }
 
 /*
@@ -31,8 +30,7 @@ to change this.
 func NewParser(opts NewParserOptions) *Parser {
 	return &Parser{
 		contextDir: opts.ContextDir,
-		log:        opts.Log,
-		status:     opts.Status,
+		reporter:   comm.NewReporter(opts.Log, opts.Event),
 	}
 }
 
