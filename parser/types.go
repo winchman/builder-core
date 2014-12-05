@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"github.com/sylphon/builder-core/communication"
-	"github.com/sylphon/builder-core/unit-config"
+	"github.com/winchman/builder-core/communication"
+	"github.com/winchman/builder-core/unit-config"
 )
 
 /*

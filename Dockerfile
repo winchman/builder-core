@@ -32,10 +32,10 @@ RUN dpkg-divert --local --rename --add /sbin/initctl \
   && ln -sv /usr/local/go/bin/* /usr/local/bin \
   && rm -f $GO_TARBALL
 
-WORKDIR /app/src/github.com/sylphon/builder-core
+WORKDIR /app/src/github.com/winchman/builder-core
 
 # set up build dir and add project
-ADD . /app/src/github.com/sylphon/builder-core
+ADD . /app/src/github.com/winchman/builder-core
 
 # - make sure we don't have trouble getting deps from GitHub
 # - touch Makefile to avoid timestamp error message

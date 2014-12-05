@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	"github.com/Sirupsen/logrus"
-	b "github.com/sylphon/builder-core/builder"
-	"github.com/sylphon/builder-core/communication"
-	p "github.com/sylphon/builder-core/parser"
-	"github.com/sylphon/builder-core/unit-config"
+	b "github.com/winchman/builder-core/builder"
+	"github.com/winchman/builder-core/communication"
+	p "github.com/winchman/builder-core/parser"
+	"github.com/winchman/builder-core/unit-config"
 )
 
 // RunBuild runs a complete build for the provided unit config.  Currently, the

@@ -6,7 +6,7 @@ import (
 
 	"github.com/fsouza/go-dockerclient"
 	"github.com/rafecolton/go-dockerclient-quick"
-	"github.com/sylphon/builder-core/communication"
+	"github.com/winchman/builder-core/communication"
 )
 
 /*

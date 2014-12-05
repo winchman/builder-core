@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/rafecolton/go-dockerclient-quick"
-	"github.com/sylphon/builder-core/parser"
-	"github.com/sylphon/builder-core/unit-config"
+	"github.com/winchman/builder-core/parser"
+	"github.com/winchman/builder-core/unit-config"
 )
 
 var unitConfig = &unitconfig.UnitConfig{
@@ -29,7 +29,7 @@ func TestBuildCommandSequence(t *testing.T) {
 	commandSequence := p.Parse(unitConfig)
 
 	builder := NewBuilder(NewBuilderOptions{
-		ContextDir:   os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing",
+		ContextDir:   os.Getenv("GOPATH") + "/src/github.com/winchman/builder-core/_testing",
 		dockerClient: dockerclient.FakeClient(),
 	})
 

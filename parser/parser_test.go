@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/sylphon/builder-core/unit-config"
+	"github.com/winchman/builder-core/unit-config"
 )
 
 var unitConfig = &unitconfig.UnitConfig{
@@ -42,7 +42,7 @@ var expectedCommandSequence = &CommandSequence{
 								},
 							},
 						},
-						ContextDir: os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/parser"},
+						ContextDir: os.Getenv("GOPATH") + "/src/github.com/winchman/builder-core/parser"},
 				},
 				&TagCmd{
 					Tag:  "latest",

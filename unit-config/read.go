@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/sylphon/builder-core/filecheck"
+	"github.com/winchman/builder-core/filecheck"
 	"gopkg.in/yaml.v2"
 )
 

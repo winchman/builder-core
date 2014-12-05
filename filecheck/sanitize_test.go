@@ -63,7 +63,7 @@ func TestBogusPath(t *testing.T) {
 }
 
 func TestValidPath(t *testing.T) {
-	var path = os.Getenv("GOPATH") + "/src/github.com/sylphon/builder-core/_testing"
+	var path = os.Getenv("GOPATH") + "/src/github.com/winchman/builder-core/_testing"
 	var filename = "Dockerfile"
 	var fullpath = path + "/" + filename
 

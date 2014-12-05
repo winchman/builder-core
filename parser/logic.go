@@ -4,7 +4,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	gouuid "github.com/nu7hatch/gouuid"
 
-	"github.com/sylphon/builder-core/unit-config"
+	"github.com/winchman/builder-core/unit-config"
 )
 
 // Parse - does the parsing!

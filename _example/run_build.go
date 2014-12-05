@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sylphon/builder-core"
-	"github.com/sylphon/builder-core/unit-config"
+	"github.com/winchman/builder-core"
+	"github.com/winchman/builder-core/unit-config"
 )
 
 var example = &unitconfig.UnitConfig{

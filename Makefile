@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 SUDO ?= sudo
 DOCKER ?= docker
-B := github.com/sylphon/builder-core
+B := github.com/winchman/builder-core
 PACKAGES := ./...
 
 GOPATH := $(shell echo $${GOPATH%%:*})

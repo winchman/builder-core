@@ -12,9 +12,9 @@ import (
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
 
-	"github.com/sylphon/builder-core/communication"
-	"github.com/sylphon/builder-core/filecheck"
-	"github.com/sylphon/builder-core/parser"
+	"github.com/winchman/builder-core/communication"
+	"github.com/winchman/builder-core/filecheck"
+	"github.com/winchman/builder-core/parser"
 )
 
 var (
