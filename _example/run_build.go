@@ -16,7 +16,7 @@ var example = &unitconfig.UnitConfig{
 			Dockerfile: "Dockerfile",
 			Registry:   "quay.io/rafecolton",
 			Project:    "builder-core-test",
-			Tags:       []string{"latest", "git:sha", "git:tag", "git:branch"},
+			Tags:       []string{"latest", "{{ sha }}", "{{ tag }}", "{{ branch }}"},
 			SkipPush:   true,
 		},
 	},
