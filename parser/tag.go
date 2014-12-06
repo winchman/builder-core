@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/rafecolton/go-gitutils"
 	"text/template"
+	"time"
 )
 
 // Tag is for tagging
@@ -33,6 +34,7 @@ func (t Tag) Evaluate(top string) string {
 		"branch": func() string { return git.Branch(top) },
 		"sha":    func() string { return git.Sha(top) },
 		"tag":    func() string { return git.Tag(top) },
+		"date":   func(format string) string { return time.Now().Format(format) },
 	}
 	templ, err := template.New("tagParser").Funcs(funcMap).Parse(t.value)
 	if err != nil {
