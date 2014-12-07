@@ -3,6 +3,8 @@ SUDO ?= sudo
 DOCKER ?= docker
 B := github.com/winchman/builder-core
 PACKAGES := ./...
+PERCENT := %
+DATE := "$(shell date "+$(PERCENT)Y-$(PERCENT)m-$(PERCENT)d")"
 
 GOPATH := $(shell echo $${GOPATH%%:*})
 
@@ -21,7 +23,7 @@ monkey-patch-drone:
 
 .PHONY: test
 test: fmtpolice
-	go test ./...
+	DATE=$(DATE) go test ./...
 	@find . -type f -name '*.test' -exec rm {} \;
 
 .PHONY: fmtpolice

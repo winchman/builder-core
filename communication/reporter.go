@@ -20,7 +20,7 @@ func NewReporter(log LogChan, event EventChan) *Reporter {
 
 // Log - send a log message into the ether
 func (r *Reporter) Log(entry *logrus.Entry, message string) {
-	r.LogLevel(entry, message, logrus.DebugLevel)
+	r.LogLevel(entry, message, logrus.InfoLevel)
 }
 
 // LogLevel - send a log message into the ether, specifying level

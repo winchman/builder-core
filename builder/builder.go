@@ -161,12 +161,13 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 			return
 		}
 		if matched {
-			bob.reporter.Log(
+			bob.reporter.LogLevel(
 				l.WithFields(l.Fields{
 					"image_id": image.ID,
 					"tag":      tag,
 				}),
 				"deleting temporary tag",
+				l.DebugLevel,
 			)
 
 			if err = bob.dockerClient.Client().RemoveImage(tag); err != nil {

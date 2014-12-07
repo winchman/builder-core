@@ -41,7 +41,7 @@ type logEntryWriter struct {
 func (writer logEntryWriter) Write(p []byte) (n int, err error) {
 	lines := strings.Split(string(p), "\n")
 	for _, line := range lines {
-		writer.log <- (*logEntry)(&logrus.Entry{Message: string(line), Level: logrus.DebugLevel})
+		writer.log <- (*logEntry)(&logrus.Entry{Message: string(line), Level: logrus.InfoLevel})
 	}
 	return len(p), nil
 }
