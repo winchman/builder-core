@@ -10,10 +10,23 @@ import (
 	"github.com/winchman/builder-core/unit-config"
 )
 
+// Options encapsulates the options for RunBuild/RunBuildSynchronously
+type Options struct {
+	UnitConfig *unitconfig.UnitConfig
+	ContextDir string
+
+	// LogLevel is only used for RunBuildSynchronously, ignored for RunBuild
+	// LogLevel defaults to PanicLevel if not set
+	LogLevel logrus.Level
+}
+
 // RunBuild runs a complete build for the provided unit config.  Currently, the
 // channels argument is ignored but will be used in the future along with the
 // LogMsg and StatusMsg interfaces
-func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogChan, comm.EventChan, comm.ExitChan) {
+func RunBuild(opts Options) (comm.LogChan, comm.EventChan, comm.ExitChan) {
+	var unitConfig = opts.UnitConfig
+	var contextDir = opts.ContextDir
+
 	var log = make(chan comm.LogEntry, 1)
 	var event = make(chan comm.Event, 1)
 	var exit = make(chan error)
@@ -51,10 +64,10 @@ func RunBuild(unitConfig *unitconfig.UnitConfig, contextDir string) (comm.LogCha
 }
 
 // RunBuildSynchronously - run a build, wait for it to finish, log to stdout
-func RunBuildSynchronously(unitConfig *unitconfig.UnitConfig, contextDir string) error {
+func RunBuildSynchronously(opts Options) error {
 	var logger = logrus.New()
-	logger.Level = logrus.InfoLevel
-	log, status, done := RunBuild(unitConfig, contextDir)
+	logger.Level = opts.LogLevel
+	log, status, done := RunBuild(opts)
 	for {
 		select {
 		case e, ok := <-log:
