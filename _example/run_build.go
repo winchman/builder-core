@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Sirupsen/logrus"
+
 	"github.com/winchman/builder-core"
 	"github.com/winchman/builder-core/unit-config"
 )
@@ -23,7 +25,12 @@ var example = &unitconfig.UnitConfig{
 }
 
 func main() {
-	if err := runner.RunBuildSynchronously(example, os.Getenv("GOPATH")+"/src/github.com/rafecolton/docker-builder"); err != nil {
+	opts := runner.Options{
+		UnitConfig: example,
+		ContextDir: os.Getenv("GOPATH") + "/src/github.com/rafecolton/docker-builder",
+		LogLevel:   logrus.InfoLevel,
+	}
+	if err := runner.RunBuildSynchronously(opts); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
