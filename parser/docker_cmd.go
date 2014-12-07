@@ -2,9 +2,13 @@ package parser
 
 import (
 	"io"
+	"io/ioutil"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/fsouza/go-dockerclient"
+	"github.com/jwilder/docker-squash/libsquash"
 	"github.com/rafecolton/go-dockerclient-quick"
 	"github.com/winchman/builder-core/communication"
 )
@@ -114,6 +118,61 @@ func (b *BuildCmd) Run() (string, error) {
 			"error":    nil,
 		},
 	})
+
+	println("squashing...")
+
+	//libsquash.Verbose = true
+	var wg sync.WaitGroup
+
+	imageReader, pipeWriter := io.Pipe()
+	defer pipeWriter.Close()
+	defer imageReader.Close()
+
+	go func() {
+		wg.Add(1)
+		imageID := image.ID
+		exportOpts := docker.ExportImageOptions{
+			Name:         imageID,
+			OutputStream: pipeWriter,
+		}
+		if err := opts.DockerClient.Client().ExportImage(exportOpts); err != nil {
+			println(err.Error())
+			//return "", err
+		}
+	}()
+
+	tempdir, err := ioutil.TempDir("", "docker-squash")
+	if err != nil {
+		println(err.Error())
+		return "", err
+	}
+
+	defer func() {
+		//if err := os.RemoveAll(tempdir); err != nil {
+		//println(err.Error())
+		//}
+	}()
+
+	reader, err := libsquash.Squash(imageReader, tempdir)
+	if err != nil {
+		println(err.Error())
+		return "", err
+	}
+
+	println("current name: " + buildOpts.Name)
+
+	importOpts := docker.ImportImageOptions{
+		Source:       "-",
+		Repository:   "test",
+		Tag:          "foo",
+		InputStream:  reader,
+		OutputStream: os.Stdout,
+	}
+
+	opts.DockerClient.Client().ImportImage(importOpts)
+
+	wg.Wait()
+
 	return image.ID, nil
 }
 
