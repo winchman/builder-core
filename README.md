@@ -12,6 +12,9 @@ This repo is now the core builder library
 
 See godocs and [`_example/`](./_example)
 
-## TODO
+## Writing a bobfile.yml
 
-- it works - now, rewrite tests
+* [Writing a Bobfile](_docs/bobfile/writing-a-bobfile.md)
+
+
+**NOTE:** for legacy reasons, the default file name is `Bobfile`
