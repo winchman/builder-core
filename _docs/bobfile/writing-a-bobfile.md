@@ -5,6 +5,10 @@ Related docs:
 * [Writing a Bobfile - Version 0 (deprecated)](writing-a-bobfile-version-zero.md)
 * [Upgrading Bobfile from Version 0 to Version 1: How and Why](upgrading-zero-to-one.md)
 
+Notes:
+
+* In addition to YAML, [TOML](https://github.com/mojombo/toml) is also a supported format
+
 ## About
 
 The basic ingredients to a Bob-build are the `docker-builder` executable and a
@@ -14,121 +18,110 @@ check out the other docs referenced
 
 ## Writing a `Bobfile` Config
 
-Here is an example `Bobfile` config file with each section explained.
-Bob config files are written in [toml](https://github.com/mojombo/toml).
-**NOTE:** The file does not have to be named `Bobfile`.  It can be named
-whatever you want, and you can have as many bob config files as you
-want.  The name `Bobfile` is just a convention.
+Here is an example `Bobfile` config file with each section explained.  A
+`Bobfile` can be named whatever you want
 
-```toml
+```yaml
+---
 # Bobfile
+version: 1 # this is required, or your Bobfile may be parsed incorrectly
 
-version = 1 # this is required, or your Bobfile may be parsed incorrectly
+docker:
+  build_opts: [ "--rm" ]
+  tag_opts: [ "--force" ]
 
-[docker]
-build_opts = [
-  "--rm",
-  "--no-cache"
-]
-tag_opts = ["--force"]
+container_globals:
+  registry: "rafecolton"
+  dockercfg_un: "foo"
+  dockercfg_pass: "bar"
+  dockercfg_email: "baz@example.com"
+  project: "my-app"
+  tags: [ "{{ branch }}", "{{ sha }}", "{{ tag }}" ]
 
-[container_globals]
-registry = "rafecolton"
-dockercfg_un = "foo"
-dockercfg_pass = "bar"
-dockercfg_email = "baz@example.com"
-project = "my-app"
-tags = [
-  "{{ branch }}",
-  "{{ sha }}",
-  "{{ tag }}"
-]
-
-[[container]]
-name = "base"
-Dockerfile = "Dockerfile.base"
-tags = ["base"]
-skip_push = true
-
-[[container]]
-name = "app"
-Dockerfile = "Dockerfile.app"
+container:
+- name: "base"
+  Dockerfile: "Dockerfile.base"
+  tags: [ "base-{{ date `2006-01-02` }}" ]
+  skip_push: true
+- name: "app"
+  Dockerfile: "Dockerfile.app"
 ```
 
-### The `[docker]` Section
+### The `docker:` Section
 
-The `[docker]` section is used for declaring options that will be passed
+type: hash
+
+The `docker:` section is used for declaring options that will be passed
 to the `docker build` and `docker tag` commands.  The following stanzas
 are available:
 
-* `build_opts` - Array
-* `tag_opts` - Array
+* `build_opts` (array)
+* `tag_opts` (array)
 
-### The `[container_globals]` Section
+### The `container_globals:` Section
 
-The `[container_globals]` section is a special section that will get
+type: hash
+
+The `container_globals:` section is a special section that will get
 merged into each of the other container sections, with the values in the
 individual container section taking precedence over the global section.
 For example, the above `Bobfile` could be rewritten as follows:
 
-```toml
+```yaml
 # Bobfile
-[docker]
-build_opts = [
-  "--rm",
-  "--no-cache"
-]
-tag_opts = ["-f"]
+version: 1 # this is required, or your Bobfile may be parsed incorrectly
 
-[[container]]
-name = "base"
-Dockerfile = "Dockerfile.base"
-registry = "rafecolton"
-dockercfg_un = "foo"
-dockercfg_pass = "bar"
-dockercfg_email = "baz@example.com"
-project = "my-app"
-tags = ["base"]
-skip_push = true
+docker:
+  build_opts: [ "--rm" ]
+  tag_opts: [ "--force" ]
 
-[[container]]
-name = "app"
-Dockerfile = "Dockerfile.app"
-registry = "rafecolton"
-dockercfg_un = "foo"
-dockercfg_pass = "bar"
-dockercfg_email = "baz@example.com"
-project = "my-app"
-tags = [
-  "{{ branch }}",
-  "{{ sha }}",
-  "{{ tag }}"
-]
+container:
+- name: "base"
+  Dockerfile: "Dockerfile.base"
+  registry: "rafecolton"
+  dockercfg_un: "foo"
+  dockercfg_pass: "bar"
+  dockercfg_email: "baz@example.com"
+  project: "my-app"
+  tags: [ "base-{{ date `2006-01-02` }}" ]
+  skip_push: true
+- name: "app"
+  Dockerfile: "Dockerfile.app"
+  registry: "rafecolton"
+  dockercfg_un: "foo"
+  dockercfg_pass: "bar"
+  dockercfg_email: "baz@example.com"
+  project: "my-app"
+  tags: [ "{{ branch }}", "{{ sha }}", "{{ tag }}" ]
 ```
 
-### The `[[container]]` Sections
+### The `container:` Sections
 
-The following stanzas are available in a `[[container]]` section:
+type: array of hashes
 
-* `name` - String (required) - the name of the section
-* `Dockerfile` - String (required) - the file to be used as the
+The following stanzas are available in a `container:` section:
+
+* `name` (string, required) - the name of the section
+* `Dockerfile` (string, required) - the file to be used as the
   "Dockerfile" for the build
-* `registry` - String
-* `project` - String
-* <del>`excluded` - Array</del> **deprecated**
-* <del>`included` - Array</del> **deprecated**
-* `tags` - Array
-* `skip_push` - Bool - don't run `docker push...` after building this
+* `registry` (string)
+* `project` (string)
+* `tags` (array)
+* `skip_push` (bool) - don't run `docker push...` after building this
   container
 * Docker registry credentials (for authenticating to a registry when pushing images)
-  - `dockercfg_un` - auth username
-  - `dockercfg_pass` - auth password
-  - `dockercfg_email` - auth email
+  - `dockercfg_un` (string)- auth username
+  - `dockercfg_pass` (string) - auth password
+  - `dockercfg_email` (string) - auth email
 
 #### The `tags` Stanza
 
 All tags are evaluated using the golang template package.  There are a
 few special functions that may be interpolated in the tag string.
+
+**NOTE:** There is a YAML gotcha - if your tag string begins with a `{`,
+you must enclose it in quotes.  Arguments to tag functions may be
+enclosed in backticks as an alternative to
 
 ##### git-based tags
 
@@ -145,35 +138,13 @@ There is one date-based tag:
 
   - `{{ date "<format>" }}` - today's date (and time), formated as specified by &lt;format&gt;
 
-For example, `daily-{{ date "2006-01-02" }}` might produce the tag `daily-2014-12-07`.
+For example, `daily-{{ date "2006-01-02" }}` (also ``daily-{{ date `2006-01-02` }}``) might produce the tag `daily-2014-12-07`.
 
 There are a couple of important notes about using date-based tags:
 
-0. The value for &lt;format&gt; must match the [Golang `time` package
-   formatting](http://golang.org/pkg/time/#pkg-constants)
+0. The value for &lt;format&gt; must match the [Golang `time` package formatting](http://golang.org/pkg/time/#pkg-constants)
 0. Per the above, the date in the format string must be the following:
 
     Mon Jan 2 15:04:05 -0700 MST 2006
 
 0. The value for &lt;format&gt; must be a properly quoted string
-
-## Linting &amp; Building
-
-Once you have written your `Bobfile` config file, linting and building
-are both very simple.  First, place the `Bobfile` file at the top level
-of your application repo. 
-
-Then, to validate your config:
-
-```bash
-docker-builder lint <path>/<to>/Bobfile
-```
-
-and to build:
-
-```bash
-docker-builder build <path>/<to>/Bobfile.whatever
-
-# or, if your config is just named "Bobfile", then from the repo top level...
-docker-builder build
-```
