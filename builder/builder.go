@@ -8,11 +8,12 @@ import (
 
 	l "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/modcloth/go-fileutils"
 	"github.com/onsi/gocleanup"
 	"github.com/rafecolton/go-dockerclient-quick"
+	"github.com/rafecolton/go-fileutils"
 
 	"github.com/winchman/builder-core/communication"
+	"github.com/winchman/builder-core/dockerfileplus"
 	"github.com/winchman/builder-core/filecheck"
 	"github.com/winchman/builder-core/parser"
 )
@@ -221,15 +222,9 @@ func (bob *Builder) setup() error {
 		return err
 	}
 
-	if err := fileutils.CpWithArgs(
-		contextDir+"/"+meta.Dockerfile,
-		workdir+"/Dockerfile",
-		fileutils.CpArgs{PreserveModTime: true},
-	); err != nil {
-		return err
-	}
-
-	return nil
+	src := contextDir + "/" + meta.Dockerfile
+	dest := workdir + "/Dockerfile"
+	return dockerfileplus.Process(src, dest)
 }
 
 func (bob *Builder) generateWorkDir() string {

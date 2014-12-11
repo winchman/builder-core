@@ -1,5 +1,7 @@
 package unitconfig
 
+import "fmt"
+
 /*
 UnitConfig is a struct representation of what is expected to be inside a
 Builderfile for a single build/tag/push sequence.
@@ -46,6 +48,7 @@ type ConfigGlobals struct {
 
 // SetGlobals allows some global values to be set (i.e. if pulled from the env in the calling process)
 func (config *UnitConfig) SetGlobals(globals ConfigGlobals) {
+	fmt.Printf("%#v\n", config)
 	if config.ContainerGlobals == nil {
 		config.ContainerGlobals = &ContainerSection{}
 	}

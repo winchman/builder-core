@@ -30,13 +30,12 @@ func (t Tag) Evaluate(top string) string {
 	case "git:short", "git:tag":
 		return git.Tag(top)
 	}
-	funcMap := template.FuncMap{
+	templ, err := template.New("tagParser").Funcs(template.FuncMap{
 		"branch": func() string { return git.Branch(top) },
 		"sha":    func() string { return git.Sha(top) },
 		"tag":    func() string { return git.Tag(top) },
 		"date":   func(format string) string { return time.Now().Format(format) },
-	}
-	templ, err := template.New("tagParser").Funcs(funcMap).Parse(t.value)
+	}).Parse(t.value)
 	if err != nil {
 		return ""
 	}
