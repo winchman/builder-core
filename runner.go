@@ -10,12 +10,15 @@ import (
 	"github.com/winchman/builder-core/unit-config"
 )
 
+// Flag is an option type for the RunBuild command
 type Flag uint8
 
 const (
+	// KeepTemporaryTag instructs the builder not to delete the random uuid tag
 	KeepTemporaryTag Flag = 1 << iota // KeepTemporaryTag == 1 (iota has been reset)
-	noop1            Flag = 1 << iota // noop1 == 2 // here for example/testing purposes
-	noop2            Flag = 1 << iota // noop2 == 4 // here for example/testing purposes
+
+	noop1 Flag = 1 << iota // noop1 == 2 // here for example/testing purposes
+	noop2 Flag = 1 << iota // noop2 == 4 // here for example/testing purposes
 )
 
 // Options encapsulates the options for RunBuild/RunBuildSynchronously
@@ -84,7 +87,7 @@ func RunBuild(opts Options, flags ...Flag) (comm.LogChan, comm.EventChan, comm.E
 func RunBuildSynchronously(opts Options, flags ...Flag) error {
 	var logger = logrus.New()
 	logger.Level = opts.LogLevel
-	log, status, done := RunBuild(opts, flags...)
+	log, status, done := RunBuild(opts, flags...) // make sure to update this as needed
 	for {
 		select {
 		case e, ok := <-log:
