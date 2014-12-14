@@ -12,6 +12,9 @@ import (
 
 var example = &unitconfig.UnitConfig{
 	Version: 1,
+	Docker: unitconfig.Docker{
+		TagOpts: []string{"--force"},
+	},
 	ContainerArr: []*unitconfig.ContainerSection{
 		&unitconfig.ContainerSection{
 			Name:       "app",
@@ -30,7 +33,7 @@ func main() {
 		ContextDir: os.Getenv("GOPATH") + "/src/github.com/rafecolton/docker-builder",
 		LogLevel:   logrus.InfoLevel,
 	}
-	if err := runner.RunBuildSynchronously(opts); err != nil {
+	if err := runner.RunBuildSynchronously(opts, runner.KeepTemporaryTag); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

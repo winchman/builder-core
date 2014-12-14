@@ -10,6 +10,14 @@ import (
 	"github.com/winchman/builder-core/unit-config"
 )
 
+type Flag uint8
+
+const (
+	KeepTemporaryTag Flag = 1 << iota // KeepTemporaryTag == 1 (iota has been reset)
+	noop1            Flag = 1 << iota // noop1 == 2 // here for example/testing purposes
+	noop2            Flag = 1 << iota // noop2 == 4 // here for example/testing purposes
+)
+
 // Options encapsulates the options for RunBuild/RunBuildSynchronously
 type Options struct {
 	UnitConfig *unitconfig.UnitConfig
@@ -20,10 +28,19 @@ type Options struct {
 	LogLevel logrus.Level
 }
 
+func shouldKeepTemporaryTag(flags []Flag) bool {
+	var total Flag
+	for _, flag := range flags {
+		total |= flag
+	}
+	return total&KeepTemporaryTag == KeepTemporaryTag
+}
+
 // RunBuild runs a complete build for the provided unit config.  Currently, the
 // channels argument is ignored but will be used in the future along with the
 // LogMsg and StatusMsg interfaces
-func RunBuild(opts Options) (comm.LogChan, comm.EventChan, comm.ExitChan) {
+func RunBuild(opts Options, flags ...Flag) (comm.LogChan, comm.EventChan, comm.ExitChan) {
+
 	var unitConfig = opts.UnitConfig
 	var contextDir = opts.ContextDir
 
@@ -51,7 +68,7 @@ func RunBuild(opts Options) (comm.LogChan, comm.EventChan, comm.ExitChan) {
 			Log:        log,
 			Event:      event,
 		})
-
+		builder.KeepTemporaryTag = shouldKeepTemporaryTag(flags)
 		if err = builder.BuildCommandSequence(commandSequence); err != nil {
 			exit <- err
 			return
@@ -64,31 +81,17 @@ func RunBuild(opts Options) (comm.LogChan, comm.EventChan, comm.ExitChan) {
 }
 
 // RunBuildSynchronously - run a build, wait for it to finish, log to stdout
-func RunBuildSynchronously(opts Options) error {
+func RunBuildSynchronously(opts Options, flags ...Flag) error {
 	var logger = logrus.New()
 	logger.Level = opts.LogLevel
-	log, status, done := RunBuild(opts)
+	log, status, done := RunBuild(opts, flags...)
 	for {
 		select {
 		case e, ok := <-log:
 			if !ok {
 				return errors.New("log channel closed prematurely")
 			}
-			e.Entry().Logger = logger
-			switch e.Entry().Level {
-			case logrus.PanicLevel:
-				e.Entry().Panicln(e.Entry().Message)
-			case logrus.FatalLevel:
-				e.Entry().Fatalln(e.Entry().Message)
-			case logrus.ErrorLevel:
-				e.Entry().Errorln(e.Entry().Message)
-			case logrus.WarnLevel:
-				e.Entry().Warnln(e.Entry().Message)
-			case logrus.InfoLevel:
-				e.Entry().Infoln(e.Entry().Message)
-			default:
-				e.Entry().Debugln(e.Entry().Message)
-			}
+			logLevel(logger, e.Entry())
 		case event, ok := <-status:
 			if !ok {
 				return errors.New("status channel closed prematurely")
@@ -100,5 +103,23 @@ func RunBuildSynchronously(opts Options) error {
 			}
 			return err
 		}
+	}
+}
+
+func logLevel(logger *logrus.Logger, e *logrus.Entry) {
+	e.Logger = logger
+	switch e.Level {
+	case logrus.PanicLevel:
+		e.Panicln(e.Message)
+	case logrus.FatalLevel:
+		e.Fatalln(e.Message)
+	case logrus.ErrorLevel:
+		e.Errorln(e.Message)
+	case logrus.WarnLevel:
+		e.Warnln(e.Message)
+	case logrus.InfoLevel:
+		e.Infoln(e.Message)
+	default:
+		e.Debugln(e.Message)
 	}
 }
