@@ -4,7 +4,8 @@ DOCKER ?= docker
 B := github.com/winchman/builder-core
 PACKAGES := ./...
 PERCENT := %
-DATE := "$(shell date "+$(PERCENT)Y-$(PERCENT)m-$(PERCENT)d")"
+DATE := $(shell date "+$(PERCENT)Y-$(PERCENT)m-$(PERCENT)d")
+export DATE
 
 GOPATH := $(shell echo $${GOPATH%%:*})
 
@@ -23,7 +24,7 @@ monkey-patch-drone:
 
 .PHONY: test
 test: fmtpolice
-	DATE=$(DATE) go test ./...
+	go test ./...
 	@find . -type f -name '*.test' -exec rm {} \;
 
 .PHONY: fmtpolice

@@ -38,6 +38,10 @@ type Builder struct {
 	reporter        *comm.Reporter
 	Builderfile     string
 	contextDir      string
+
+	// KeepTemporaryTag instructs the builder to keep the temporary tag, which
+	// takes the form registry/project:<random=uuid>
+	KeepTemporaryTag bool
 }
 
 /*
@@ -132,7 +136,9 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 			}
 		}
 
-		bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
+		if !bob.KeepTemporaryTag {
+			bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
+		}
 	}
 
 	bob.reporter.Event(comm.EventOptions{EventType: comm.CompletedEvent})

@@ -10,6 +10,7 @@ import (
 // LogEntry is a convenient, extensible way to ship logrus log entries
 type LogEntry interface {
 	Entry() *logrus.Entry
+	LogWithLogger(*logrus.Logger)
 }
 
 // NewLogEntry produces a log entry that can be sent on a LogChan
@@ -21,6 +22,25 @@ type logEntry logrus.Entry
 
 func (l *logEntry) Entry() *logrus.Entry {
 	return (*logrus.Entry)(l)
+}
+
+func (l *logEntry) LogWithLogger(logger *logrus.Logger) {
+	var e = l.Entry()
+	e.Logger = logger
+	switch e.Level {
+	case logrus.PanicLevel:
+		e.Panicln(e.Message)
+	case logrus.FatalLevel:
+		e.Fatalln(e.Message)
+	case logrus.ErrorLevel:
+		e.Errorln(e.Message)
+	case logrus.WarnLevel:
+		e.Warnln(e.Message)
+	case logrus.InfoLevel:
+		e.Infoln(e.Message)
+	default:
+		e.Debugln(e.Message)
+	}
 }
 
 // LogEntryWriter is a type for implementing the io.Writer interface
