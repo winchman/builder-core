@@ -16,4 +16,4 @@ after_success:
 - make goveralls
 env:
   global:
-    secure: N9ov/trnA42r0ZMo7iHWeMY65vWQEA3z17A9RCXsblqxOdKjGJAdEqKHKmNWlG4yFP/3B5Pyc39xZcIC1p3RucWsvuRuDaFMV0d4agmqkWUIyQl+SVKQGYeQedvjgcMQcGRlqTYgVNGn0ugyX4VU/BdkKH0G+DeEfQ/19k+YXP8=
+    secure: CrXu4Sb7tGDmmJrz/ldwksgynvHDwFJ6gi3hHi8r0CAkiTZ+1e9DswNVxDmkIgbVt2NQrUhphIWqTttWEvs0g5oqYI52/qbEHADOK3eZ30UYoiwFqMgphwZIGt3G7Of7pS41Y1w2Jlb9QK730EWPLEgGUoPXVU9iQDXKtUqEPIo=
