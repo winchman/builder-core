@@ -140,7 +140,8 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 					"command":  cmd.Message(),
 					"image_id": imageID,
 				}),
-				"finished running docker command")
+				"finished running docker command",
+			)
 		}
 
 		if !bob.KeepTemporaryTag {
