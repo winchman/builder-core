@@ -94,7 +94,7 @@ func RunBuildSynchronously(opts Options, flags ...Flag) error {
 			if !ok {
 				return errors.New("log channel closed prematurely")
 			}
-			logEntry(logger, e.Entry())
+			e.LogWithLogger(logger)
 		case event, ok := <-status:
 			if !ok {
 				return errors.New("status channel closed prematurely")
@@ -106,23 +106,5 @@ func RunBuildSynchronously(opts Options, flags ...Flag) error {
 			}
 			return err
 		}
-	}
-}
-
-func logEntry(logger *logrus.Logger, e *logrus.Entry) {
-	e.Logger = logger
-	switch e.Level {
-	case logrus.PanicLevel:
-		e.Panicln(e.Message)
-	case logrus.FatalLevel:
-		e.Fatalln(e.Message)
-	case logrus.ErrorLevel:
-		e.Errorln(e.Message)
-	case logrus.WarnLevel:
-		e.Warnln(e.Message)
-	case logrus.InfoLevel:
-		e.Infoln(e.Message)
-	default:
-		e.Debugln(e.Message)
 	}
 }
