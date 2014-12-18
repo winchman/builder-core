@@ -130,6 +130,13 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 					return err
 				}
 			}
+
+			bob.reporter.Log(
+				l.WithFields(l.Fields{
+					"command":  cmd.Message(),
+					"image_id": imageID,
+				}),
+				"finished running docker command")
 		}
 
 		bob.attemptToDeleteTemporaryUUIDTag(seq.Metadata.UUID)
