@@ -65,6 +65,7 @@ type SubSequenceMetadata struct {
 	Dockerfile string
 	UUID       string
 	SkipPush   bool
+	Squash     bool
 }
 
 /*

@@ -43,7 +43,6 @@ func shouldKeepTemporaryTag(flags []Flag) bool {
 // channels argument is ignored but will be used in the future along with the
 // LogMsg and StatusMsg interfaces
 func RunBuild(opts Options, flags ...Flag) (comm.LogChan, comm.EventChan, comm.ExitChan) {
-
 	var unitConfig = opts.UnitConfig
 	var contextDir = opts.ContextDir
 

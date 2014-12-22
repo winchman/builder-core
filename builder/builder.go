@@ -121,6 +121,7 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 				Stdout:       bob.Stdout,
 				Workdir:      bob.workdir,
 				Reporter:     bob.reporter,
+				Squash:       seq.Metadata.Squash,
 			}
 			cmd = cmd.WithOpts(opts)
 

@@ -34,11 +34,14 @@ type ContainerSection struct {
 	CfgUn      string   `toml:"dockercfg_un" json:"dockercfg_un" yaml:"dockercfg_un"`
 	CfgPass    string   `toml:"dockercfg_pass" json:"dockercfg_pass" yaml:"dockercfg_pass"`
 	CfgEmail   string   `toml:"dockercfg_email" json:"dockercfg_email" yaml:"dockercfg_email"`
+
+	Squash bool `toml:"squash" json:"squash" yaml:"squash"`
 }
 
 // ConfigGlobals are the global values that may be set with SetGlobals
 type ConfigGlobals struct {
 	SkipPush bool
+	Squash   bool
 	CfgUn    string
 	CfgPass  string
 	CfgEmail string
@@ -52,6 +55,9 @@ func (config *UnitConfig) SetGlobals(globals ConfigGlobals) {
 
 	if !config.ContainerGlobals.SkipPush {
 		config.ContainerGlobals.SkipPush = globals.SkipPush
+	}
+	if !config.ContainerGlobals.Squash {
+		config.ContainerGlobals.Squash = globals.Squash
 	}
 	if config.ContainerGlobals.CfgUn == "" {
 		config.ContainerGlobals.CfgUn = globals.CfgUn

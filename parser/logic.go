@@ -67,6 +67,7 @@ func mergeGlobals(container, globals *unitconfig.ContainerSection) *unitconfig.C
 	}
 
 	container.SkipPush = container.SkipPush || globals.SkipPush
+	container.Squash = container.Squash || globals.Squash
 
 	return container
 }
@@ -181,6 +182,7 @@ func (parser *Parser) step2(is *InstructionSet) *CommandSequence {
 				Name:       v.Name,
 				Dockerfile: v.Dockerfile,
 				UUID:       uuid.String(),
+				Squash:     v.Squash,
 			},
 			SubCommand: containerCommands,
 		})

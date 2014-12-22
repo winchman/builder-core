@@ -20,6 +20,7 @@ type DockerCmdOpts struct {
 	Stdout       io.Writer
 	Stderr       io.Writer
 	SkipPush     bool
+	Squash       bool
 	ImageUUID    string
 	Reporter     *comm.Reporter
 }
@@ -75,6 +76,9 @@ func (b *BuildCmd) Run() (string, error) {
 	var opts = b.opts
 	if b.test {
 		return opts.ImageUUID, NilClientError{}
+	}
+	if opts.Squash {
+		//TODO: handle squashing
 	}
 
 	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEvent})
