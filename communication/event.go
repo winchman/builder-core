@@ -16,6 +16,24 @@ const (
 	// BuildEvent is for when a `docker build` command starts
 	BuildEvent
 
+	// BuildEventSquashStartExport - start exporting tar for squashing
+	BuildEventSquashStartExport
+
+	// BuildEventSquashFinishExport - finish exporting tar for squashing
+	BuildEventSquashFinishExport
+
+	// BuildEventSquashStartSquash - start squashing
+	BuildEventSquashStartSquash
+
+	// BuildEventSquashFinishSquash - finish squashing
+	BuildEventSquashFinishSquash
+
+	// BuildEventSquashStartImport - start importing squashed image
+	BuildEventSquashStartImport
+
+	// BuildEventSquashFinishImport - finish importing squashed image
+	BuildEventSquashFinishImport
+
 	// BuildCompletedEvent is for when a `docker build` command completes
 	BuildCompletedEvent
 
@@ -34,29 +52,6 @@ const (
 	// CompletedEvent is for whe nthe entire build finishes (corresopnds to a RequestedEvent)
 	CompletedEvent
 )
-
-func (t EventType) String() string {
-	switch t {
-	case RequestedEvent:
-		return "RequestedEvent"
-	case CompletedEvent:
-		return "CompletedEvent"
-	case BuildEvent:
-		return "BuildEvent"
-	case BuildCompletedEvent:
-		return "BuildCompletedEvent"
-	case TagEvent:
-		return "TagEvent"
-	case TagCompletedEvent:
-		return "TagCompletedEvent"
-	case PushEvent:
-		return "PushEvent"
-	case PushCompletedEvent:
-		return "PushCompletedEvent"
-	default:
-		return ""
-	}
-}
 
 type event struct {
 	eventType EventType

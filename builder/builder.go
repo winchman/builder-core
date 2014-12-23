@@ -135,14 +135,6 @@ func (bob *Builder) BuildCommandSequence(commandSequence *parser.CommandSequence
 					return err
 				}
 			}
-
-			bob.reporter.Log(
-				l.WithFields(l.Fields{
-					"command":  cmd.Message(),
-					"image_id": imageID,
-				}),
-				"finished running docker command",
-			)
 		}
 
 		if !bob.KeepTemporaryTag {
@@ -164,7 +156,7 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 	image, err := bob.dockerClient.LatestImageByRegex(regex)
 	if err != nil {
 		bob.reporter.LogLevel(
-			l.WithField("err", err),
+			l.WithField("error", err),
 			"error getting repo taggged with temporary tag",
 			l.WarnLevel,
 		)
@@ -187,7 +179,7 @@ func (bob *Builder) attemptToDeleteTemporaryUUIDTag(uuid string) {
 
 			if err = bob.dockerClient.Client().RemoveImage(tag); err != nil {
 				bob.reporter.LogLevel(
-					l.WithField("err", err),
+					l.WithField("error", err),
 					"error deleting temporary tag",
 					l.WarnLevel,
 				)
