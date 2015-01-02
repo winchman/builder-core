@@ -205,8 +205,7 @@ func (b *BuildCmd) Run() (string, error) {
 		go func() {
 			b.reporter.Log(log.NewEntry(nil), "starting squash of export tar stream")
 			b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartSquash})
-			err := libsquash.Squash(imageReader1, imageReader2, squashedImageWriter)
-			if err != nil {
+			if err := libsquash.Squash(imageReader1, imageReader2, squashedImageWriter); err != nil {
 				b.reporter.LogLevel(log.WithField("error", err), "error squashing image", log.ErrorLevel)
 				if err := squashedImageWriter.CloseWithError(err); err != nil {
 					b.reporter.LogLevel(log.WithField("error", err), "error closing squash image write pipe", log.ErrorLevel)
