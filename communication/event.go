@@ -1,3 +1,4 @@
+//go:generate stringer -type=EventType
 package comm
 
 // EventType is a type for constants that indicate the type of event reported
@@ -16,11 +17,11 @@ const (
 	// BuildEvent is for when a `docker build` command starts
 	BuildEvent
 
-	// BuildEventSquashStartExport - start exporting tar for squashing
-	BuildEventSquashStartExport
+	// BuildEventSquashStartSave - start exporting tar for squashing
+	BuildEventSquashStartSave
 
-	// BuildEventSquashFinishExport - finish exporting tar for squashing
-	BuildEventSquashFinishExport
+	// BuildEventSquashFinishSave - finish exporting tar for squashing
+	BuildEventSquashFinishSave
 
 	// BuildEventSquashStartSquash - start squashing
 	BuildEventSquashStartSquash
@@ -28,11 +29,11 @@ const (
 	// BuildEventSquashFinishSquash - finish squashing
 	BuildEventSquashFinishSquash
 
-	// BuildEventSquashStartImport - start importing squashed image
-	BuildEventSquashStartImport
+	// BuildEventSquashStartLoad - start importing squashed image
+	BuildEventSquashStartLoad
 
-	// BuildEventSquashFinishImport - finish importing squashed image
-	BuildEventSquashFinishImport
+	// BuildEventSquashFinishLoad - finish importing squashed image
+	BuildEventSquashFinishLoad
 
 	// BuildCompletedEvent is for when a `docker build` command completes
 	BuildCompletedEvent
