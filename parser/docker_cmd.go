@@ -123,8 +123,6 @@ func (b *BuildCmd) Run() (string, error) {
 	var retID = image.ID
 
 	if opts.Squash {
-		//libsquash.Verbose = true
-
 		var imageReader, pipeWriter = io.Pipe()
 		var squashedImageReader, squashedImageWriter = io.Pipe()
 		var retIDBuffer = new(bytes.Buffer)
@@ -192,7 +190,6 @@ func (b *BuildCmd) Run() (string, error) {
 
 		retID = retIDBuffer.String()
 
-		//retID = strings.TrimRight(squashImgIDBuf.String(), "\n")
 		b.reporter.Event(comm.EventOptions{
 			EventType: comm.BuildEventSquashFinishLoad,
 			Data:      map[string]interface{}{"squashed_image_id": retID},
