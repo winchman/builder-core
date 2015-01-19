@@ -9,7 +9,8 @@ import (
 	"github.com/winchman/libsquash"
 )
 
-func (b *BuildCmd) exportImage(image *docker.APIImages, out io.Writer, opts *DockerCmdOpts) {
+// error returned may be safely ignored
+func (b *BuildCmd) exportImage(image *docker.APIImages, out io.Writer, opts *DockerCmdOpts) error {
 	b.reporter.Log(log.WithField("image_id", image.ID), "starting squash of "+image.ID)
 	b.reporter.Event(comm.EventOptions{
 		EventType: comm.BuildEventSquashStartSave,
@@ -23,6 +24,7 @@ func (b *BuildCmd) exportImage(image *docker.APIImages, out io.Writer, opts *Doc
 	}
 	if err := opts.DockerClient.Client().ExportImage(exportOpts); err != nil {
 		b.reporter.LogLevel(log.WithField("error", err), "error exporting image for squash", log.ErrorLevel)
+		return err
 	}
 	b.reporter.Event(comm.EventOptions{
 		EventType: comm.BuildEventSquashFinishSave,
@@ -30,21 +32,27 @@ func (b *BuildCmd) exportImage(image *docker.APIImages, out io.Writer, opts *Doc
 			"image_id": image.ID,
 		},
 	})
+	return nil
 }
 
-func (b *BuildCmd) squash(in *io.PipeReader, out *io.PipeWriter, retIDBuffer io.Writer) {
+// error returned may be safely ignored
+func (b *BuildCmd) squash(in *io.PipeReader, out *io.PipeWriter, retIDBuffer io.Writer) error {
 	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartSquash})
 	if err := libsquash.Squash(in, out, retIDBuffer); err != nil {
 		b.reporter.LogLevel(log.WithField("error", err), "error squashing image", log.ErrorLevel)
 		if err := out.CloseWithError(err); err != nil {
 			b.reporter.LogLevel(log.WithField("error", err), "error closing squash image write pipe", log.ErrorLevel)
+			return err
 		}
+		return err
 	} else {
 		if err := out.Close(); err != nil {
 			b.reporter.LogLevel(log.WithField("error", err), "error closing squash image write pipe", log.ErrorLevel)
+			return err
 		}
 	}
 	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashFinishSquash})
+	return nil
 }
 
 func (b *BuildCmd) loadImage(in *io.PipeReader, opts *DockerCmdOpts) error {
