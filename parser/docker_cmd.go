@@ -9,7 +9,6 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"github.com/rafecolton/go-dockerclient-quick"
 	"github.com/winchman/builder-core/communication"
-	"github.com/winchman/libsquash"
 )
 
 /*
@@ -76,7 +75,7 @@ func (err NilClientError) Error() string {
 //Run is the command that actually calls docker build shell command.  Determine
 //the image ID for the resulting image and return that as well.
 func (b *BuildCmd) Run() (string, error) {
-	var opts = b.opts
+	opts := b.opts
 	if b.test {
 		return opts.ImageUUID, NilClientError{}
 	}
@@ -119,73 +118,33 @@ func (b *BuildCmd) Run() (string, error) {
 			"error":    nil,
 		},
 	})
-
-	var retID = image.ID
+	retID := image.ID
 
 	if opts.Squash {
-		var imageReader, pipeWriter = io.Pipe()
-		var squashedImageReader, squashedImageWriter = io.Pipe()
-		var retIDBuffer = new(bytes.Buffer)
+		imageReader, pipeWriter := io.Pipe()
+		squashedImageReader, squashedImageWriter := io.Pipe()
+		retIDBuffer := new(bytes.Buffer)
 
 		defer func() {
-			for _, pipeReader := range []*io.PipeReader{imageReader, squashedImageReader} {
-				pipeReader.Close()
-			}
-
-			for _, pipeWriter := range []*io.PipeWriter{pipeWriter, squashedImageWriter} {
-				pipeWriter.Close()
-			}
+			imageReader.Close()
+			squashedImageReader.Close()
+			pipeWriter.Close()
+			squashedImageWriter.Close()
 		}()
 
-		// exporting in a goroutine since the io.Pipe is synchronous
-		go func() {
-			b.reporter.Log(log.WithField("image_id", image.ID), "starting squash of "+image.ID)
-			b.reporter.Event(comm.EventOptions{
-				EventType: comm.BuildEventSquashStartSave,
-				Data: map[string]interface{}{
-					"image_id": image.ID,
-				},
-			})
-			exportOpts := docker.ExportImageOptions{
-				Name:         image.ID,
-				OutputStream: pipeWriter,
-			}
-			if err := opts.DockerClient.Client().ExportImage(exportOpts); err != nil {
-				b.reporter.LogLevel(log.WithField("error", err), "error exporting image for squash", log.ErrorLevel)
-			}
-			b.reporter.Event(comm.EventOptions{
-				EventType: comm.BuildEventSquashFinishSave,
-				Data: map[string]interface{}{
-					"image_id": image.ID,
-				},
-			})
-		}()
+		// exporting async
+		go b.exportImage(image, pipeWriter, opts)
 
-		// squash
-		go func() {
-			b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartSquash})
-			if err := libsquash.Squash(imageReader, squashedImageWriter, retIDBuffer); err != nil {
-				b.reporter.LogLevel(log.WithField("error", err), "error squashing image", log.ErrorLevel)
-				if err := squashedImageWriter.CloseWithError(err); err != nil {
-					b.reporter.LogLevel(log.WithField("error", err), "error closing squash image write pipe", log.ErrorLevel)
-				}
-			} else {
-				if err := squashedImageWriter.Close(); err != nil {
-					b.reporter.LogLevel(log.WithField("error", err), "error closing squash image write pipe", log.ErrorLevel)
-				}
-			}
-			b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashFinishSquash})
-		}()
+		// squash async
+		go b.squash(imageReader, squashedImageWriter, retIDBuffer)
 
-		// import
-		b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartLoad})
-
-		loadOpts := docker.LoadImageOptions{InputStream: squashedImageReader}
-
-		if err := opts.DockerClient.Client().LoadImage(loadOpts); err != nil {
+		// import and wait for export, squash, and import to finish
+		if err := b.loadImage(squashedImageReader, opts); err != nil {
 			return "", err
 		}
 
+		// if all steps are successful, retID will contain the id of the
+		// imported, squashed imaged
 		retID = retIDBuffer.String()
 
 		b.reporter.Event(comm.EventOptions{
@@ -198,7 +157,6 @@ func (b *BuildCmd) Run() (string, error) {
 			"finished import of squashed image",
 		)
 	}
-
 	return retID, nil
 }
 

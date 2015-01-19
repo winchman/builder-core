@@ -78,8 +78,8 @@
 		},
 		{
 			"ImportPath": "github.com/winchman/libsquash",
-			"Comment": "v0.1.1-15-g60373b0",
-			"Rev": "60373b0dd84c3730bfe58598e588e344a18a5d59"
+			"Comment": "v0.1.1-34-g786fb10",
+			"Rev": "786fb10eb6af5ff7467485f9463ca85487193e8d"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
