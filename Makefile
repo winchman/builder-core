@@ -39,7 +39,6 @@ $(GOPATH)/bin/deppy:
 
 .PHONY: get
 get: $(GOPATH)/bin/deppy
-	go get -t ./...
 	$(GOPATH)/bin/deppy restore
 
 $(PWD)/coverage:
