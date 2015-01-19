@@ -220,7 +220,7 @@ func (t *TagCmd) Message() string {
 		if t.Force {
 			msg = append(msg, "--force")
 		}
-		msg = append(msg, t.Image)
+		msg = append(msg, t.Image[:12])
 		msg = append(msg, t.Repo+":"+t.Tag)
 		t.msg = strings.Join(msg, " ")
 	}
