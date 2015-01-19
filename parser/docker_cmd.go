@@ -139,7 +139,7 @@ func (b *BuildCmd) Run() (string, error) {
 
 		// exporting in a goroutine since the io.Pipe is synchronous
 		go func() {
-			b.reporter.Log(log.WithField("image_id", image.ID), "starting export of tar stream for squash")
+			b.reporter.Log(log.WithField("image_id", image.ID), "starting squash of "+image.ID)
 			b.reporter.Event(comm.EventOptions{
 				EventType: comm.BuildEventSquashStartSave,
 				Data: map[string]interface{}{
@@ -163,7 +163,6 @@ func (b *BuildCmd) Run() (string, error) {
 
 		// squash
 		go func() {
-			b.reporter.Log(log.NewEntry(nil), "starting squash of export tar stream")
 			b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartSquash})
 			if err := libsquash.Squash(imageReader, squashedImageWriter, retIDBuffer); err != nil {
 				b.reporter.LogLevel(log.WithField("error", err), "error squashing image", log.ErrorLevel)
@@ -180,7 +179,6 @@ func (b *BuildCmd) Run() (string, error) {
 
 		// import
 		b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartLoad})
-		b.reporter.Log(log.NewEntry(nil), "starting load of squashed image tar stream")
 
 		loadOpts := docker.LoadImageOptions{InputStream: squashedImageReader}
 
