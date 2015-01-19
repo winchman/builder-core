@@ -27,20 +27,20 @@ func (b *BuildCmd) squashImage(squashOpts squashImageOptions) error {
 	retIDBuffer := squashOpts.RetIDBuffer
 
 	// create some pipes
-	imageReader, pipeWriter := io.Pipe()
+	imageReader, imageWriter := io.Pipe()
 	squashedImageReader, squashedImageWriter := io.Pipe()
 
 	// defer closing all pipes
 	defer func() {
 		imageReader.Close()
 		squashedImageReader.Close()
-		pipeWriter.Close()
+		imageWriter.Close()
 		squashedImageWriter.Close()
 	}()
 
 	// exporting async - error can be ignored because errors will be propagated
 	// on the pipes.  all pipes are synchronous
-	go b.exportImage(image, pipeWriter, opts)
+	go b.exportImage(image, imageWriter, opts)
 
 	// squash async - see note above about ignoring errors
 	go b.squash(imageReader, squashedImageWriter, retIDBuffer)
@@ -113,20 +113,18 @@ func (b *BuildCmd) squash(in *io.PipeReader, out *io.PipeWriter, retIDBuffer io.
 	return nil
 }
 
-func (b *BuildCmd) loadImage(in *io.PipeReader, opts *DockerCmdOpts) (err error) {
+func (b *BuildCmd) loadImage(in *io.PipeReader, opts *DockerCmdOpts) error {
 	// log begin of docker load
-	b.reporter.Event(comm.EventOptions{
-		EventType: comm.BuildEventSquashStartLoad,
-	})
+	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartLoad})
 
 	// docker load
 	loadOpts := docker.LoadImageOptions{InputStream: in}
-	err = opts.DockerClient.Client().LoadImage(loadOpts)
+	err := opts.DockerClient.Client().LoadImage(loadOpts)
 
 	// log completion of docker load
 	b.reporter.Event(comm.EventOptions{
 		EventType: comm.BuildEventSquashFinishLoad,
 		Data:      map[string]interface{}{"error": err},
 	})
-	return
+	return err
 }

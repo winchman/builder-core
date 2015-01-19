@@ -128,7 +128,6 @@ func (b *BuildCmd) Run() (string, error) {
 			RetIDBuffer: retIDBuff,
 		}
 
-		//"squashed_image_id": retIDBuffer.String(),
 		if err := b.squashImage(squashOpts); err != nil {
 			return "", err
 		}

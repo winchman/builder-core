@@ -34,8 +34,7 @@ type ContainerSection struct {
 	CfgUn      string   `toml:"dockercfg_un" json:"dockercfg_un" yaml:"dockercfg_un"`
 	CfgPass    string   `toml:"dockercfg_pass" json:"dockercfg_pass" yaml:"dockercfg_pass"`
 	CfgEmail   string   `toml:"dockercfg_email" json:"dockercfg_email" yaml:"dockercfg_email"`
-
-	Squash bool `toml:"squash" json:"squash" yaml:"squash"`
+	Squash     bool     `toml:"squash" json:"squash" yaml:"squash"`
 }
 
 // ConfigGlobals are the global values that may be set with SetGlobals
