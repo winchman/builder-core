@@ -121,42 +121,31 @@ func (b *BuildCmd) Run() (string, error) {
 	retID := image.ID
 
 	if opts.Squash {
-		imageReader, pipeWriter := io.Pipe()
-		squashedImageReader, squashedImageWriter := io.Pipe()
-		retIDBuffer := new(bytes.Buffer)
+		retIDBuff := new(bytes.Buffer)
+		squashOpts := squashImageOptions{
+			Image:       image,
+			Opts:        opts,
+			RetIDBuffer: retIDBuff,
+		}
 
-		defer func() {
-			imageReader.Close()
-			squashedImageReader.Close()
-			pipeWriter.Close()
-			squashedImageWriter.Close()
-		}()
-
-		// exporting async
-		go b.exportImage(image, pipeWriter, opts)
-
-		// squash async
-		go b.squash(imageReader, squashedImageWriter, retIDBuffer)
-
-		// import and wait for export, squash, and import to finish
-		if err := b.loadImage(squashedImageReader, opts); err != nil {
+		//"squashed_image_id": retIDBuffer.String(),
+		if err := b.squashImage(squashOpts); err != nil {
 			return "", err
 		}
 
-		// if all steps are successful, retID will contain the id of the
-		// imported, squashed imaged
-		retID = retIDBuffer.String()
+		// if squashImage does not return error, retIDBuff is guaranteed to
+		// have a valid image ID
+		retID = retIDBuff.String()
 
-		b.reporter.Event(comm.EventOptions{
-			EventType: comm.BuildEventSquashFinishLoad,
-			Data:      map[string]interface{}{"squashed_image_id": retID},
-		})
-
+		// log completion of squash
 		b.reporter.Log(
 			log.WithFields(log.Fields{"squashed_image_id": retID}),
 			"finished import of squashed image",
 		)
 	}
+
+	// if all steps are successful, retID will contain the id of the
+	// imported, squashed imaged
 	return retID, nil
 }
 
