@@ -50,8 +50,5 @@ func (b *BuildCmd) squash(in *io.PipeReader, out *io.PipeWriter, retIDBuffer io.
 func (b *BuildCmd) loadImage(in *io.PipeReader, opts *DockerCmdOpts) error {
 	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartLoad})
 	loadOpts := docker.LoadImageOptions{InputStream: in}
-	if err := opts.DockerClient.Client().LoadImage(loadOpts); err != nil {
-		return err
-	}
-	return nil
+	return opts.DockerClient.Client().LoadImage(loadOpts)
 }
