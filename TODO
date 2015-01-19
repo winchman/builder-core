@@ -1,1 +1,4 @@
-# remove big image after squashing
+TODO:
+
+- document how to write a Bobfile to optimize squashing (see docker-builder)
+- add test for squashing
