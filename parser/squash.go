@@ -53,7 +53,7 @@ func (b *BuildCmd) squashImage(squashOpts squashImageOptions) error {
 // error returned may be safely ignored
 func (b *BuildCmd) exportImage(image *docker.APIImages, out io.Writer, opts *DockerCmdOpts) error {
 	// log export starting
-	b.reporter.Log(log.WithField("image_id", image.ID), "starting squash of "+image.ID)
+	b.reporter.Log(log.WithField("image_id", image.ID), "starting squash of "+image.ID[:12])
 
 	// report docker save begin event
 	b.reporter.Event(comm.EventOptions{
