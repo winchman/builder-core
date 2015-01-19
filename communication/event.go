@@ -1,8 +1,7 @@
-//go:generate stringer -type=EventType
 package comm
 
 // EventType is a type for constants that indicate the type of event reported
-type EventType uint8
+type EventType uint8 //go:generate stringer -type=EventType
 
 // Event is the type that will be sent over the event channel
 type Event interface {

@@ -4,18 +4,18 @@ package comm
 
 import "fmt"
 
-const _EventType_name = "RequestedEventBuildEventBuildEventSquashStartSaveBuildEventSquashFinishSaveBuildEventSquashStartSquashBuildEventSquashFinishSquashBuildEventSquashStartLoadBuildEventSquashFinishLoadBuildCompletedEventTagEventTagCompletedEventPushEventPushCompletedEventCompletedEvent"
+const _EventTypeName = "RequestedEventBuildEventBuildEventSquashStartSaveBuildEventSquashFinishSaveBuildEventSquashStartSquashBuildEventSquashFinishSquashBuildEventSquashStartLoadBuildEventSquashFinishLoadBuildCompletedEventTagEventTagCompletedEventPushEventPushCompletedEventCompletedEvent"
 
-var _EventType_index = [...]uint16{14, 24, 49, 75, 102, 130, 155, 181, 200, 208, 225, 234, 252, 266}
+var _EventTypeIndex = [...]uint16{14, 24, 49, 75, 102, 130, 155, 181, 200, 208, 225, 234, 252, 266}
 
 func (i EventType) String() string {
-	if i >= EventType(len(_EventType_index)) {
+	if i >= EventType(len(_EventTypeIndex)) {
 		return fmt.Sprintf("EventType(%d)", i)
 	}
-	hi := _EventType_index[i]
+	hi := _EventTypeIndex[i]
 	lo := uint16(0)
 	if i > 0 {
-		lo = _EventType_index[i-1]
+		lo = _EventTypeIndex[i-1]
 	}
-	return _EventType_name[lo:hi]
+	return _EventTypeName[lo:hi]
 }
