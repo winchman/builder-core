@@ -89,7 +89,7 @@ func (b *BuildCmd) squash(in *io.PipeReader, out *io.PipeWriter, retIDBuffer io.
 	b.reporter.Event(comm.EventOptions{EventType: comm.BuildEventSquashStartSquash})
 
 	// squash image
-	if err := libsquash.Squash(in, out, retIDBuffer); err != nil {
+	if err := libsquash.Squash(in, out, retIDBuffer, libsquash.SquashOptions{}); err != nil {
 
 		// if error, log error
 		b.reporter.LogLevel(log.WithField("error", err), "error squashing image", log.ErrorLevel)
